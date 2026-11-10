@@ -1,0 +1,915 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeBase</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f5f2;
+            color: #26352d;
+            margin: 0;
+            padding: 25px;
+        }
+
+        header {
+            background: #315c46;
+            color: white;
+            padding: 25px;
+            border-radius: 16px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            margin-top: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px #00000010;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #315c46;
+            color: white;
+            font-size: 14px;
+        }
+
+        input {
+            padding: 10px;
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .dashboard-header {
+            background: #315c46;
+            color: white;
+            padding: 28px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .dashboard-header h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+        }
+
+        .dashboard-header p {
+            margin: 0;
+        }
+
+        .dashboard-date {
+            text-align: right;
+            font-size: 18px;
+        }
+
+        #dashboard {
+            margin-top: 25px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1.3fr 1fr;
+            gap: 20px;
+            align-items: start;
+            min-width: 850px;
+        }
+
+        .dashboard-column {
+            min-width: 0;
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 23px;
+            border-radius: 16px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px #00000010;
+        }
+
+        .dashboard-card h2 {
+            font-size: 21px;
+            margin-bottom: 16px;
+        }
+
+        .overview-number {
+            font-size: 38px;
+            font-weight: bold;
+            color: #315c46;
+            margin: 8px 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 0;
+            border-bottom: 1px solid #edf0ed;
+            font-size: 16px;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item input {
+            width: 21px;
+            height: 21px;
+            accent-color: #315c46;
+        }
+
+        .section-description,
+        .muted {
+            color: #718077;
+            font-size: 14px;
+        }
+
+        .event-item {
+            background: #f3f5f2;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 12px;
+        }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px 0;
+            border-bottom: 1px solid #edf0ed;
+        }
+
+        .member-icon {
+            background: #e6eee8;
+            width: 43px;
+            height: 43px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 21px;
+            flex-shrink: 0;
+        }
+
+        .assistant-card {
+            background: #e8f0ea;
+            padding: 22px;
+            border-radius: 16px;
+            margin-top: 20px;
+        }
+
+        .assistant-card h2 {
+            color: #315c46;
+        }
+
+        .back-button {
+            margin-top: 20px;
+        }
+
+        .status-message {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        .member-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🏠 HomeBase</h1>
+    <p>One place for everything happening at home.</p>
+</header>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen">
+    <h1>HomeBase</h1>
+    <p>Your family's home for staying organized.</p>
+
+    <button onclick="showAccountType()">Get Started</button>
+    <br><br>
+    <button onclick="showFamilyLogin()">Open Family Dashboard</button>
+</div>
+
+<!-- FAMILY LOGIN -->
+<div id="familyLogin" style="display: none;">
+    <h2>Open Family Dashboard</h2>
+    <p>Enter your family invitation code.</p>
+
+    <input type="text" id="loginFamilyCode" placeholder="Enter family code">
+
+    <br><br>
+    <button onclick="openFamilyDashboard()">Continue</button>
+    <button onclick="backToWelcome()">Back</button>
+</div>
+
+<!-- ACCOUNT TYPE -->
+<div id="accountType" style="display: none;">
+    <h2>Welcome to HomeBase</h2>
+    <p>First, choose your account type.</p>
+
+    <button onclick="selectRole('Parent')">Parent</button>
+    <button onclick="selectRole('Child')">Child</button>
+    <br><br>
+    <button onclick="backToWelcome()">Back</button>
+</div>
+
+<!-- PARENT SIGNUP -->
+<div id="parentSignup" style="display: none;">
+    <h2>Parent Account</h2>
+    <p>Create your parent account.</p>
+
+    <label>Full Name</label><br>
+    <input type="text" id="parentName" placeholder="Enter your name">
+
+    <br><br>
+    <label>Email Address</label><br>
+    <input type="email" id="parentEmail" placeholder="Enter your email">
+
+    <br><br>
+    <label>Password</label><br>
+    <input type="password" id="parentPassword" placeholder="Create a password">
+
+    <br><br>
+    <button onclick="showFamilySetup()">Continue</button>
+    <button onclick="backToWelcome()">Back</button>
+</div>
+
+<!-- FAMILY SETUP -->
+<div id="familySetup" style="display: none;">
+    <h2>Create Your Family</h2>
+    <p>Let's get your HomeBase set up!</p>
+
+    <label>Family Name</label><br>
+    <input type="text" id="familyName" placeholder="Example: The Smith Family">
+
+    <br><br>
+    <button onclick="createFamily()">Create Family</button>
+    <button onclick="backToWelcome()">Back</button>
+</div>
+
+<!-- PARENT DASHBOARD -->
+<div id="parentDashboard" style="display: none;">
+    <h2>👨‍👩‍👧‍👦 Parent Dashboard</h2>
+    <p id="parentDashboardGreeting">Welcome to your family's HomeBase!</p>
+
+    <div class="card">
+        <h3>👥 Family Members</h3>
+        <div id="parentMemberList">
+            <p>No family members yet.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>✅ Manage Tasks</h3>
+        <p>Assign chores and review completed tasks.</p>
+    </div>
+
+    <div class="card">
+        <h3>💰 Allowance</h3>
+        <p>Manage your children's allowance.</p>
+    </div>
+
+    <div class="card" onclick="openSettings()" style="cursor: pointer;">
+        <h3>⚙️ Settings</h3>
+        <p>Account information, family preferences, security, and more.</p>
+    </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div id="settingsPage" style="display: none;">
+    <h2>⚙️ Settings</h2>
+    <p>Manage your HomeBase account and family.</p>
+
+    <div class="card" onclick="openAccountInfo()" style="cursor: pointer;">
+        <h3>👤 Account Information</h3>
+        <p>Name, email, password, and profile picture.</p>
+    </div>
+
+    <div class="card" onclick="openFamilyManagement()" style="cursor: pointer;">
+        <h3>👨‍👩‍👧 Family Management</h3>
+        <p>Family name, invitation code, and members.</p>
+    </div>
+
+    <div class="card">
+        <h3>🔔 Notifications</h3>
+        <p>Reminders and alerts.</p>
+    </div>
+
+    <div class="card">
+        <h3>🔒 Privacy & Security</h3>
+        <p>Account security and permissions.</p>
+    </div>
+
+    <div class="card">
+        <h3>🎨 Appearance</h3>
+        <p>Theme and display preferences.</p>
+    </div>
+
+    <div class="card">
+        <h3>❓ Help & Support</h3>
+        <p>Get help with HomeBase.</p>
+    </div>
+
+    <button onclick="closeSettings()">Back to Dashboard</button>
+</div>
+
+<!-- ACCOUNT INFORMATION -->
+<div id="accountInfoPage" style="display: none;">
+    <h2>👤 Account Information</h2>
+    <p>Manage your personal account details.</p>
+
+    <div class="card">
+        <h3>Name</h3>
+        <p id="accountNameDisplay">No name saved yet.</p>
+    </div>
+
+    <div class="card">
+        <h3>Email Address</h3>
+        <p id="accountEmailDisplay">No email saved yet.</p>
+    </div>
+
+    <div class="card">
+        <h3>Password</h3>
+        <p>Password management will be added when accounts are connected to a secure database.</p>
+    </div>
+
+    <div class="card">
+        <h3>Profile Picture</h3>
+        <p>Profile pictures will be added later.</p>
+    </div>
+
+    <button onclick="closeAccountInfo()">Back to Settings</button>
+</div>
+
+<!-- FAMILY MANAGEMENT -->
+<div id="familyManagementPage" style="display: none;">
+    <h2>👨‍👩‍👧 Family Management</h2>
+    <p>Manage your family's HomeBase information.</p>
+
+    <div class="card">
+        <h3>Family Name</h3>
+        <p id="displayFamilyName">No family name saved yet.</p>
+    </div>
+
+    <div class="card">
+        <h3>Family Invitation Code</h3>
+        <p>Share this code with family members so they can join.</p>
+
+        <h2 id="displayInvitationCode">No code generated yet.</h2>
+
+        <button onclick="copyInvitationCode()">Copy Invitation Code</button>
+    </div>
+
+    <div class="card">
+        <h3>👥 Family Members</h3>
+        <div id="managementMemberList">
+            <p>No family members yet.</p>
+        </div>
+    </div>
+
+    <button onclick="closeFamilyManagement()">Back to Settings</button>
+</div>
+
+<!-- CHILD SIGNUP -->
+<div id="childSignup" style="display: none;">
+    <h2>Child Account</h2>
+    <p>Create your child account.</p>
+
+    <label>Full Name</label><br>
+    <input type="text" id="childName" placeholder="Enter your name">
+
+    <br><br>
+    <label>Email Address (optional)</label><br>
+    <input type="email" id="childEmail" placeholder="Enter your email">
+
+    <br><br>
+    <label>Family Invitation Code</label><br>
+    <input type="text" id="familyCode" placeholder="Enter your family code">
+
+    <br><br>
+    <label>Password</label><br>
+    <input type="password" id="childPassword" placeholder="Create a password">
+
+    <br><br>
+    <button onclick="createChildAccount()">Create Account</button>
+    <button onclick="backToWelcome()">Back</button>
+
+    <p id="childSignupMessage" class="status-message"></p>
+</div>
+
+<!-- CHILD DASHBOARD -->
+<div id="childDashboard" style="display: none;">
+    <h2>Welcome to HomeBase!</h2>
+    <p id="childWelcome"></p>
+
+    <div class="card">
+        <h3>✅ My Tasks</h3>
+        <p id="taskCounter">0 of 3 tasks completed</p>
+
+        <label><input type="checkbox" class="taskCheckbox"> Finish homework</label>
+        <br><br>
+        <label><input type="checkbox" class="taskCheckbox"> Feed the pets</label>
+        <br><br>
+        <label><input type="checkbox" class="taskCheckbox"> Clean bedroom</label>
+    </div>
+
+    <div class="card">
+        <h3>💰 My Allowance</h3>
+        <h2>$0.00</h2>
+        <p>Your earned allowance will appear here.</p>
+    </div>
+</div>
+
+<!-- FAMILY DASHBOARD: TABLET LANDSCAPE -->
+<div id="dashboard" style="display: none;">
+
+    <div class="dashboard-header">
+        <div>
+            <h1>🏠 HomeBase</h1>
+            <p id="dashboardGreeting">Welcome home!</p>
+        </div>
+
+        <div class="dashboard-date">
+            <div id="dashboardDay"></div>
+            <div id="dashboardDate"></div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+
+        <div class="dashboard-column">
+            <div class="dashboard-card">
+                <h2>📊 Today's Overview</h2>
+                <p class="muted">Family tasks completed</p>
+                <div class="overview-number" id="familyTaskProgress">0/3</div>
+                <p id="familyTaskMessage">Let's get today started!</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>✅ Today's Family Tasks</h2>
+                <p class="section-description">Check off tasks as they are completed.</p>
+
+                <label class="task-item">
+                    <input type="checkbox" class="familyTask">
+                    Finish homework
+                </label>
+
+                <label class="task-item">
+                    <input type="checkbox" class="familyTask">
+                    Feed the pets
+                </label>
+
+                <label class="task-item">
+                    <input type="checkbox" class="familyTask">
+                    Clean bedroom
+                </label>
+            </div>
+        </div>
+
+        <div class="dashboard-column">
+            <div class="dashboard-card">
+                <h2>📅 Family Calendar</h2>
+                <p class="section-description">What's happening today?</p>
+
+                <div class="event-item">
+                    <strong>Today's Events</strong>
+                    <p class="muted">No events added yet.</p>
+                </div>
+
+                <div class="event-item">
+                    <strong>Upcoming Events</strong>
+                    <p class="muted">Your family's upcoming activities will appear here.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>🔔 Family Reminders</h2>
+                <p class="muted">Important family reminders will appear here.</p>
+            </div>
+        </div>
+
+        <div class="dashboard-column">
+            <div class="dashboard-card">
+                <h2>👨‍👩‍👧‍👦 Family Members</h2>
+                <p class="section-description">Everyone in your HomeBase.</p>
+                <div id="dashboardMemberList">
+                    <p class="muted">No family members yet.</p>
+                </div>
+            </div>
+
+            <div class="assistant-card">
+                <h2>🤖 HomeBase Assistant</h2>
+                <p>Your family's helpful assistant is coming soon!</p>
+                <p class="muted">
+                    Soon you'll be able to ask questions like:
+                    "What does everyone need to finish today?"
+                </p>
+
+                <button disabled style="opacity: 0.6;">
+                    Voice Assistant Coming Soon
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="back-button" onclick="backToWelcome()">
+        Back to Welcome Screen
+    </button>
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+
+function hideAllScreens() {
+    const screens = [
+        "welcomeScreen",
+        "familyLogin",
+        "accountType",
+        "parentSignup",
+        "familySetup",
+        "parentDashboard",
+        "settingsPage",
+        "accountInfoPage",
+        "familyManagementPage",
+        "childSignup",
+        "childDashboard",
+        "dashboard"
+    ];
+
+    screens.forEach(function(id) {
+        document.getElementById(id).style.display = "none";
+    });
+}
+
+function backToWelcome() {
+    hideAllScreens();
+    document.getElementById("welcomeScreen").style.display = "block";
+}
+
+function showAccountType() {
+    hideAllScreens();
+    document.getElementById("accountType").style.display = "block";
+}
+
+function showFamilyLogin() {
+    hideAllScreens();
+    document.getElementById("familyLogin").style.display = "block";
+}
+
+function selectRole(role) {
+    hideAllScreens();
+
+    if (role === "Parent") {
+        document.getElementById("parentSignup").style.display = "block";
+    } else {
+        document.getElementById("childSignup").style.display = "block";
+    }
+}
+
+function showFamilySetup() {
+    const name = document.getElementById("parentName").value.trim();
+    const email = document.getElementById("parentEmail").value.trim();
+    const password = document.getElementById("parentPassword").value;
+
+    if (!name || !email || !password) {
+        alert("Please fill in your name, email, and password.");
+        return;
+    }
+
+    if (!document.getElementById("parentEmail").checkValidity()) {
+        alert("Please enter a valid email address.");
+        return;
+    }
+
+    localStorage.setItem("homeBaseParentName", name);
+    localStorage.setItem("homeBaseParentEmail", email);
+
+    hideAllScreens();
+    document.getElementById("familySetup").style.display = "block";
+}
+
+function getFamilyMembers() {
+    try {
+        return JSON.parse(localStorage.getItem("homeBaseMembers")) || [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveFamilyMembers(members) {
+    localStorage.setItem("homeBaseMembers", JSON.stringify(members));
+}
+
+function createFamily() {
+    const familyName = document.getElementById("familyName").value.trim();
+
+    if (!familyName) {
+        alert("Please enter your family name.");
+        return;
+    }
+
+    const existingCode = localStorage.getItem("homeBaseFamilyCode");
+
+    if (existingCode) {
+        const replaceFamily = confirm(
+            "A family already exists in this browser. Creating a new one will replace its local demo family information. Continue?"
+        );
+
+        if (!replaceFamily) {
+            return;
+        }
+    }
+
+    const code = "HOME-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const parentName = localStorage.getItem("homeBaseParentName") || "Parent";
+
+    localStorage.setItem("homeBaseFamilyName", familyName);
+    localStorage.setItem("homeBaseFamilyCode", code);
+
+    const members = [
+        {
+            name: parentName,
+            role: "Parent"
+        }
+    ];
+
+    saveFamilyMembers(members);
+    renderFamilyMembers();
+
+    hideAllScreens();
+    document.getElementById("parentDashboard").style.display = "block";
+    document.getElementById("parentDashboardGreeting").textContent =
+        "Welcome to " + familyName + "!";
+}
+
+function createChildAccount() {
+    const childName = document.getElementById("childName").value.trim();
+    const childEmail = document.getElementById("childEmail").value.trim();
+    const enteredCode = document.getElementById("familyCode").value.trim().toUpperCase();
+    const childPassword = document.getElementById("childPassword").value;
+
+    const savedCode = localStorage.getItem("homeBaseFamilyCode");
+    const savedFamilyName = localStorage.getItem("homeBaseFamilyName");
+
+    if (!childName || !enteredCode || !childPassword) {
+        alert("Please fill in your name, family code, and password.");
+        return;
+    }
+
+    if (!savedCode || enteredCode !== savedCode || !savedFamilyName) {
+        alert("That family invitation code is incorrect. Please check it and try again.");
+        return;
+    }
+
+    if (childEmail && !document.getElementById("childEmail").checkValidity()) {
+        alert("Please enter a valid email address.");
+        return;
+    }
+
+    const members = getFamilyMembers();
+
+    const alreadyExists = members.some(function(member) {
+        return member.name.toLowerCase() === childName.toLowerCase();
+    });
+
+    if (alreadyExists) {
+        alert("A family member with that name is already registered in this demo.");
+        return;
+    }
+
+    members.push({
+        name: childName,
+        role: "Child",
+        email: childEmail
+    });
+
+    saveFamilyMembers(members);
+    renderFamilyMembers();
+
+    localStorage.setItem("homeBaseCurrentChild", childName);
+
+    hideAllScreens();
+    document.getElementById("childDashboard").style.display = "block";
+    document.getElementById("childWelcome").textContent =
+        "Welcome, " + childName + "! You're part of " + savedFamilyName + ".";
+}
+
+function renderFamilyMembers() {
+    const members = getFamilyMembers();
+
+    const containers = [
+        document.getElementById("parentMemberList"),
+        document.getElementById("managementMemberList"),
+        document.getElementById("dashboardMemberList")
+    ];
+
+    containers.forEach(function(container) {
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        if (members.length === 0) {
+            container.textContent = "No family members yet.";
+            return;
+        }
+
+        members.forEach(function(member) {
+            const item = document.createElement("div");
+            item.className = "member-item";
+
+            const icon = document.createElement("div");
+            icon.className = "member-icon";
+            icon.textContent = member.role === "Parent" ? "👨" : "🧒";
+
+            const details = document.createElement("div");
+
+            const name = document.createElement("strong");
+            name.textContent = member.name;
+
+            const role = document.createElement("p");
+            role.className = "muted";
+            role.textContent = member.role;
+
+            details.appendChild(name);
+            details.appendChild(role);
+            item.appendChild(icon);
+            item.appendChild(details);
+            container.appendChild(item);
+        });
+    });
+}
+
+function openFamilyDashboard() {
+    const enteredCode = document.getElementById("loginFamilyCode").value.trim().toUpperCase();
+    const savedCode = localStorage.getItem("homeBaseFamilyCode");
+
+    if (!enteredCode) {
+        alert("Please enter your family code.");
+        return;
+    }
+
+    if (!savedCode || enteredCode !== savedCode) {
+        alert("Incorrect family code. Please try again.");
+        return;
+    }
+
+    hideAllScreens();
+    document.getElementById("dashboard").style.display = "block";
+
+    loadFamilyDashboard();
+}
+
+function loadFamilyDashboard() {
+    const familyName = localStorage.getItem("homeBaseFamilyName");
+
+    document.getElementById("dashboardGreeting").textContent =
+        familyName ? "Welcome to " + familyName + "!" : "Welcome home!";
+
+    const today = new Date();
+
+    document.getElementById("dashboardDay").textContent =
+        today.toLocaleDateString(undefined, { weekday: "long" });
+
+    document.getElementById("dashboardDate").textContent =
+        today.toLocaleDateString(undefined, {
+            month: "long",
+            day: "numeric",
+            year: "numeric"
+        });
+
+    renderFamilyMembers();
+}
+
+function openSettings() {
+    hideAllScreens();
+    document.getElementById("settingsPage").style.display = "block";
+}
+
+function closeSettings() {
+    hideAllScreens();
+    document.getElementById("parentDashboard").style.display = "block";
+    renderFamilyMembers();
+}
+
+function openAccountInfo() {
+    document.getElementById("settingsPage").style.display = "none";
+
+    document.getElementById("accountNameDisplay").textContent =
+        localStorage.getItem("homeBaseParentName") || "No name saved yet.";
+
+    document.getElementById("accountEmailDisplay").textContent =
+        localStorage.getItem("homeBaseParentEmail") || "No email saved yet.";
+
+    document.getElementById("accountInfoPage").style.display = "block";
+}
+
+function closeAccountInfo() {
+    document.getElementById("accountInfoPage").style.display = "none";
+    document.getElementById("settingsPage").style.display = "block";
+}
+
+function openFamilyManagement() {
+    document.getElementById("settingsPage").style.display = "none";
+
+    document.getElementById("displayFamilyName").textContent =
+        localStorage.getItem("homeBaseFamilyName") || "No family name saved yet.";
+
+    document.getElementById("displayInvitationCode").textContent =
+        localStorage.getItem("homeBaseFamilyCode") || "No code generated yet.";
+
+    renderFamilyMembers();
+
+    document.getElementById("familyManagementPage").style.display = "block";
+}
+
+function closeFamilyManagement() {
+    document.getElementById("familyManagementPage").style.display = "none";
+    document.getElementById("settingsPage").style.display = "block";
+}
+
+function copyInvitationCode() {
+    const code = localStorage.getItem("homeBaseFamilyCode");
+
+    if (!code) {
+        alert("There is no invitation code to copy yet.");
+        return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code)
+            .then(function() {
+                alert("Invitation code copied!");
+            })
+            .catch(function() {
+                alert("Your invitation code is: " + code);
+            });
+    } else {
+        alert("Your invitation code is: " + code);
+    }
+}
+
+function updateTaskCounter() {
+    const tasks = document.querySelectorAll(".taskCheckbox");
+    const completed = document.querySelectorAll(".taskCheckbox:checked").length;
+
+    document.getElementById("taskCounter").textContent =
+        completed + " of " + tasks.length + " tasks completed";
+}
+
+document.querySelectorAll(".taskCheckbox").forEach(function(checkbox) {
+    checkbox.addEventListener("change", updateTaskCounter);
+});
+
+function updateFamilyTaskProgress() {
+    const tasks = document.querySelectorAll(".familyTask");
+    const completed = document.querySelectorAll(".familyTask:checked").length;
+
+    document.getElementById("familyTaskProgress").textContent =
+        completed + "/" + tasks.length;
+
+    if (completed === tasks.length) {
+        document.getElementById("familyTaskMessage").textContent =
+            "All tasks completed! Great job!";
+    } else if (completed === 0) {
+        document.getElementById("familyTaskMessage").textContent =
+            "Let's get today started!";
+    } else {
+        document.getElementById("familyTaskMessage").textContent =
+            "You're making progress!";
+    }
+}
+
+document.querySelectorAll(".familyTask").forEach(function(checkbox) {
+    checkbox.addEventListener("change", updateFamilyTaskProgress);
+});
+
+updateTaskCounter();
+updateFamilyTaskProgress();
+renderFamilyMembers();
+
+</script>
+
+</body>
+</html>

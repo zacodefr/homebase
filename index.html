@@ -1,667 +1,276 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HomeBase</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f5f2;
-            color: #26352d;
-            margin: 0;
-            padding: 25px;
-        }
-
-        header {
-            background: #315c46;
-            color: white;
-            padding: 25px;
-            border-radius: 16px;
-        }
-
-        .card {
-            background: white;
-            padding: 22px;
-            margin-top: 20px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px #00000010;
-        }
-
-        button {
-            cursor: pointer;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            background: #315c46;
-            color: white;
-            font-size: 14px;
-        }
-
-        input {
-            padding: 10px;
-            max-width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 7px;
-        }
-
-        h2 {
-            margin-top: 0;
-        }
-
-        .dashboard-header {
-            background: #315c46;
-            color: white;
-            padding: 28px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .dashboard-header h1 {
-            margin: 0 0 8px;
-            font-size: 32px;
-        }
-
-        .dashboard-header p {
-            margin: 0;
-        }
-
-        .dashboard-date {
-            text-align: right;
-            font-size: 18px;
-        }
-
-        #dashboard {
-            margin-top: 25px;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1.1fr 1.3fr 1fr;
-            gap: 20px;
-            align-items: start;
-            min-width: 850px;
-        }
-
-        .dashboard-column {
-            min-width: 0;
-        }
-
-        .dashboard-card {
-            background: white;
-            padding: 23px;
-            border-radius: 16px;
-            margin-top: 20px;
-            box-shadow: 0 2px 8px #00000010;
-        }
-
-        .dashboard-card h2 {
-            font-size: 21px;
-            margin-bottom: 16px;
-        }
-
-        .overview-number {
-            font-size: 38px;
-            font-weight: bold;
-            color: #315c46;
-            margin: 8px 0;
-        }
-
-        .task-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 13px 0;
-            border-bottom: 1px solid #edf0ed;
-            font-size: 16px;
-        }
-
-        .task-item:last-child {
-            border-bottom: none;
-        }
-
-        .task-item input {
-            width: 21px;
-            height: 21px;
-            accent-color: #315c46;
-        }
-
-        .section-description,
-        .muted {
-            color: #718077;
-            font-size: 14px;
-        }
-
-        .event-item {
-            background: #f3f5f2;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 12px;
-        }
-
-        .member-item {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-            padding: 13px 0;
-            border-bottom: 1px solid #edf0ed;
-        }
-
-        .member-icon {
-            background: #e6eee8;
-            width: 43px;
-            height: 43px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 21px;
-            flex-shrink: 0;
-        }
-
-        .assistant-card {
-            background: #e8f0ea;
-            padding: 22px;
-            border-radius: 16px;
-            margin-top: 20px;
-        }
-
-        .assistant-card h2 {
-            color: #315c46;
-        }
-
-        .back-button {
-            margin-top: 20px;
-        }
-
-        .status-message {
-            margin-top: 12px;
-            font-weight: bold;
-        }
-
-        .member-item:last-child {
-            border-bottom: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeBase</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background: #f3f5f2; color: #26352d; margin: 0; padding: 25px; }
+header, .dashboard-header { background: #315c46; color: white; padding: 25px; border-radius: 16px; }
+.card, .dashboard-card { background: white; padding: 22px; margin-top: 20px; border-radius: 16px; box-shadow: 0 2px 8px #00000010; }
+button { cursor: pointer; padding: 10px 16px; border: none; border-radius: 8px; background: #315c46; color: white; font-size: 14px; margin: 3px; }
+button.secondary { background: #718077; }
+button.danger { background: #a94442; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+input, select, textarea { padding: 10px; max-width: 100%; border: 1px solid #ccc; border-radius: 7px; font: inherit; }
+textarea { width: 100%; min-height: 75px; resize: vertical; }
+input[type="checkbox"] { width: 20px; height: 20px; accent-color: #315c46; }
+input[type="file"] { display: block; margin: 10px 0; max-width: 100%; }
+h2 { margin-top: 0; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.dashboard-header h1 { margin: 0 0 8px; font-size: 32px; }
+.dashboard-header p { margin: 0; }
+.dashboard-date { text-align: right; font-size: 18px; }
+.dashboard-grid { display: grid; grid-template-columns: 1.1fr 1.3fr 1fr; gap: 20px; align-items: start; min-width: 850px; }
+.dashboard-column { min-width: 0; }
+.dashboard-card h2 { font-size: 21px; margin-bottom: 16px; }
+.overview-number { font-size: 38px; font-weight: bold; color: #315c46; margin: 8px 0; }
+.task-item, .member-item { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid #edf0ed; }
+.task-item:last-child, .member-item:last-child { border-bottom: none; }
+.section-description, .muted { color: #718077; font-size: 14px; }
+.event-item { background: #f3f5f2; padding: 15px; border-radius: 10px; margin-top: 12px; }
+.event-item p { margin: 7px 0; }
+.member-icon { background: #e6eee8; width: 43px; height: 43px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 21px; flex-shrink: 0; }
+.assistant-card { background: #e8f0ea; padding: 22px; border-radius: 16px; margin-top: 20px; }
+.assistant-card h2 { color: #315c46; }
+.status-message { margin-top: 12px; font-weight: bold; }
+.task-card { border: 1px solid #e1e8e2; padding: 15px; border-radius: 12px; margin-top: 12px; }
+.task-card h3 { margin: 0 0 8px; }
+.task-status { display: inline-block; background: #edf2ee; color: #315c46; padding: 5px 9px; border-radius: 20px; font-size: 12px; margin-top: 8px; }
+.task-status.pending { background: #fff2d8; color: #805b14; }
+.task-status.completed { background: #e1f2e5; color: #246b37; }
+.task-status.rejected { background: #f9e5e5; color: #a33c3c; }
+.submission-photo { display: block; width: 100%; max-width: 320px; max-height: 260px; object-fit: contain; background: #f3f5f2; border-radius: 10px; margin: 12px 0; }
+.photo-label { font-weight: bold; margin-top: 12px; }
+.back-button { margin-top: 20px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.form-field { min-width: 0; }
+.form-field input, .form-field select { width: 100%; }
+.event-actions { margin-top: 10px; }
+.event-meta { color: #718077; font-size: 13px; }
+.reminder-item { background: #fff8e8; border-left: 4px solid #d6a447; padding: 14px; border-radius: 10px; margin-top: 12px; }
+.reminder-item p { margin: 7px 0; }
+.reminder-done { background: #e7f2e9; border-left-color: #4f8b60; }
+.reminder-status { font-size: 13px; color: #718077; }
+@media (max-width: 700px) {
+    body { padding: 12px; }
+    .form-grid { grid-template-columns: 1fr; }
+}
+</style>
 </head>
-
 <body>
-
 <header>
     <h1>🏠 HomeBase</h1>
     <p>One place for everything happening at home.</p>
 </header>
 
-<!-- WELCOME SCREEN -->
 <div id="welcomeScreen">
     <h1>HomeBase</h1>
     <p>Your family's home for staying organized.</p>
-
-    <button onclick="showAccountType()">Get Started</button>
-    <br><br>
+    <button onclick="showAccountType()">Get Started</button><br><br>
     <button onclick="showFamilyLogin()">Open Family Dashboard</button>
 </div>
 
-<!-- FAMILY LOGIN -->
-<div id="familyLogin" style="display: none;">
+<div id="familyLogin" style="display:none;">
     <h2>Open Family Dashboard</h2>
     <p>Enter your family invitation code.</p>
-
-    <input type="text" id="loginFamilyCode" placeholder="Enter family code">
-
+    <input id="loginFamilyCode" placeholder="Enter family code">
     <br><br>
     <button onclick="openFamilyDashboard()">Continue</button>
-    <button onclick="backToWelcome()">Back</button>
+    <button class="secondary" onclick="backToWelcome()">Back</button>
 </div>
 
-<!-- ACCOUNT TYPE -->
-<div id="accountType" style="display: none;">
+<div id="accountType" style="display:none;">
     <h2>Welcome to HomeBase</h2>
     <p>First, choose your account type.</p>
-
     <button onclick="selectRole('Parent')">Parent</button>
-    <button onclick="selectRole('Child')">Child</button>
-    <br><br>
-    <button onclick="backToWelcome()">Back</button>
+    <button onclick="selectRole('Child')">Child</button><br><br>
+    <button class="secondary" onclick="backToWelcome()">Back</button>
 </div>
 
-<!-- PARENT SIGNUP -->
-<div id="parentSignup" style="display: none;">
+<div id="parentSignup" style="display:none;">
     <h2>Parent Account</h2>
     <p>Create your parent account.</p>
-
-    <label>Full Name</label><br>
-    <input type="text" id="parentName" placeholder="Enter your name">
-
-    <br><br>
-    <label>Email Address</label><br>
-    <input type="email" id="parentEmail" placeholder="Enter your email">
-
-    <br><br>
-    <label>Password</label><br>
-    <input type="password" id="parentPassword" placeholder="Create a password">
-
-    <br><br>
+    <label>Full Name</label><br><input id="parentName" placeholder="Enter your name"><br><br>
+    <label>Email Address</label><br><input type="email" id="parentEmail" placeholder="Enter your email"><br><br>
+    <label>Password</label><br><input type="password" id="parentPassword" placeholder="Create a password"><br><br>
     <button onclick="showFamilySetup()">Continue</button>
-    <button onclick="backToWelcome()">Back</button>
+    <button class="secondary" onclick="backToWelcome()">Back</button>
 </div>
 
-<!-- FAMILY SETUP -->
-<div id="familySetup" style="display: none;">
+<div id="familySetup" style="display:none;">
     <h2>Create Your Family</h2>
     <p>Let's get your HomeBase set up!</p>
-
-    <label>Family Name</label><br>
-    <input type="text" id="familyName" placeholder="Example: The Smith Family">
-
-    <br><br>
+    <label>Family Name</label><br><input id="familyName" placeholder="Example: The Smith Family"><br><br>
     <button onclick="createFamily()">Create Family</button>
-    <button onclick="backToWelcome()">Back</button>
+    <button class="secondary" onclick="backToWelcome()">Back</button>
 </div>
 
-<!-- PARENT DASHBOARD -->
-<div id="parentDashboard" style="display: none;">
+<div id="parentDashboard" style="display:none;">
     <h2>👨‍👩‍👧‍👦 Parent Dashboard</h2>
     <p id="parentDashboardGreeting">Welcome to your family's HomeBase!</p>
+    <div class="card"><h3>👥 Family Members</h3><div id="parentMemberList"></div></div>
 
     <div class="card">
-        <h3>👥 Family Members</h3>
-        <div id="parentMemberList">
-            <p>No family members yet.</p>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>✅ Manage Tasks</h3>
-        <p>Assign chores and review completed tasks.</p>
+        <h3>📅 Family Calendar</h3>
+        <p>View, add, edit, and manage family events.</p>
+        <div id="parentEventForm"></div>
+        <div id="parentEventList"></div>
     </div>
 
     <div class="card">
-        <h3>💰 Allowance</h3>
-        <p>Manage your children's allowance.</p>
+        <h3>🔔 Family Reminders</h3>
+        <p>Create reminders for everyone in the family.</p>
+        <div id="parentReminderForm"></div>
+        <div id="parentReminderList"></div>
     </div>
 
-    <div class="card" onclick="openSettings()" style="cursor: pointer;">
-        <h3>⚙️ Settings</h3>
-        <p>Account information, family preferences, security, and more.</p>
+    <div class="card">
+        <h3>✅ Manage Tasks</h3><p>Create tasks and assign them to family members.</p>
+        <label>Task Name</label><br><input id="newTaskName" placeholder="Example: Take out the trash"><br><br>
+        <label>Assign To</label><br><select id="newTaskAssignee"></select><br><br>
+        <label>Due Date (optional)</label><br><input type="date" id="newTaskDueDate"><br><br>
+        <button onclick="createTask()">+ Create Task</button><p id="taskCreateMessage" class="status-message"></p>
     </div>
+    <div class="card"><h3>📋 All Family Tasks</h3><div id="parentTaskList"></div></div>
+    <div class="card"><h3>🔔 Tasks Awaiting Approval</h3><div id="approvalTaskList"></div></div>
+    <div class="card"><h3>💰 Allowance</h3><p>Manage your children's allowance. More features coming soon!</p></div>
+    <div class="card" onclick="openSettings()" style="cursor:pointer;"><h3>⚙️ Settings</h3><p>Account information, family preferences, security, and more.</p></div>
 </div>
 
-<!-- SETTINGS PAGE -->
-<div id="settingsPage" style="display: none;">
+<div id="settingsPage" style="display:none;">
     <h2>⚙️ Settings</h2>
-    <p>Manage your HomeBase account and family.</p>
-
-    <div class="card" onclick="openAccountInfo()" style="cursor: pointer;">
-        <h3>👤 Account Information</h3>
-        <p>Name, email, password, and profile picture.</p>
-    </div>
-
-    <div class="card" onclick="openFamilyManagement()" style="cursor: pointer;">
-        <h3>👨‍👩‍👧 Family Management</h3>
-        <p>Family name, invitation code, and members.</p>
-    </div>
-
-    <div class="card">
-        <h3>🔔 Notifications</h3>
-        <p>Reminders and alerts.</p>
-    </div>
-
-    <div class="card">
-        <h3>🔒 Privacy & Security</h3>
-        <p>Account security and permissions.</p>
-    </div>
-
-    <div class="card">
-        <h3>🎨 Appearance</h3>
-        <p>Theme and display preferences.</p>
-    </div>
-
-    <div class="card">
-        <h3>❓ Help & Support</h3>
-        <p>Get help with HomeBase.</p>
-    </div>
-
+    <div class="card" onclick="openAccountInfo()"><h3>👤 Account Information</h3><p>Name and email.</p></div>
+    <div class="card" onclick="openFamilyManagement()"><h3>👨‍👩‍👧 Family Management</h3><p>Family name, invitation code, and members.</p></div>
+    <div class="card"><h3>🔔 Notifications</h3><p>Reminders and alerts coming soon.</p></div>
+    <div class="card"><h3>🔒 Privacy & Security</h3><p>Account security and permissions.</p></div>
     <button onclick="closeSettings()">Back to Dashboard</button>
 </div>
 
-<!-- ACCOUNT INFORMATION -->
-<div id="accountInfoPage" style="display: none;">
+<div id="accountInfoPage" style="display:none;">
     <h2>👤 Account Information</h2>
-    <p>Manage your personal account details.</p>
-
-    <div class="card">
-        <h3>Name</h3>
-        <p id="accountNameDisplay">No name saved yet.</p>
-    </div>
-
-    <div class="card">
-        <h3>Email Address</h3>
-        <p id="accountEmailDisplay">No email saved yet.</p>
-    </div>
-
-    <div class="card">
-        <h3>Password</h3>
-        <p>Password management will be added when accounts are connected to a secure database.</p>
-    </div>
-
-    <div class="card">
-        <h3>Profile Picture</h3>
-        <p>Profile pictures will be added later.</p>
-    </div>
-
+    <div class="card"><h3>Name</h3><p id="accountNameDisplay"></p></div>
+    <div class="card"><h3>Email Address</h3><p id="accountEmailDisplay"></p></div>
+    <div class="card"><h3>Password</h3><p>Password management will be added with secure accounts.</p></div>
     <button onclick="closeAccountInfo()">Back to Settings</button>
 </div>
 
-<!-- FAMILY MANAGEMENT -->
-<div id="familyManagementPage" style="display: none;">
+<div id="familyManagementPage" style="display:none;">
     <h2>👨‍👩‍👧 Family Management</h2>
-    <p>Manage your family's HomeBase information.</p>
-
-    <div class="card">
-        <h3>Family Name</h3>
-        <p id="displayFamilyName">No family name saved yet.</p>
-    </div>
-
-    <div class="card">
-        <h3>Family Invitation Code</h3>
-        <p>Share this code with family members so they can join.</p>
-
-        <h2 id="displayInvitationCode">No code generated yet.</h2>
-
-        <button onclick="copyInvitationCode()">Copy Invitation Code</button>
-    </div>
-
-    <div class="card">
-        <h3>👥 Family Members</h3>
-        <div id="managementMemberList">
-            <p>No family members yet.</p>
-        </div>
-    </div>
-
+    <div class="card"><h3>Family Name</h3><p id="displayFamilyName"></p></div>
+    <div class="card"><h3>Family Invitation Code</h3><h2 id="displayInvitationCode"></h2><button onclick="copyInvitationCode()">Copy Invitation Code</button></div>
+    <div class="card"><h3>Family Members</h3><div id="managementMemberList"></div></div>
     <button onclick="closeFamilyManagement()">Back to Settings</button>
 </div>
 
-<!-- CHILD SIGNUP -->
-<div id="childSignup" style="display: none;">
-    <h2>Child Account</h2>
-    <p>Create your child account.</p>
-
-    <label>Full Name</label><br>
-    <input type="text" id="childName" placeholder="Enter your name">
-
-    <br><br>
-    <label>Email Address (optional)</label><br>
-    <input type="email" id="childEmail" placeholder="Enter your email">
-
-    <br><br>
-    <label>Family Invitation Code</label><br>
-    <input type="text" id="familyCode" placeholder="Enter your family code">
-
-    <br><br>
-    <label>Password</label><br>
-    <input type="password" id="childPassword" placeholder="Create a password">
-
-    <br><br>
+<div id="childSignup" style="display:none;">
+    <h2>Child Account</h2><p>Create your child account.</p>
+    <label>Full Name</label><br><input id="childName" placeholder="Enter your name"><br><br>
+    <label>Email Address (optional)</label><br><input type="email" id="childEmail" placeholder="Enter your email"><br><br>
+    <label>Family Invitation Code</label><br><input id="familyCode" placeholder="Enter your family code"><br><br>
+    <label>Password</label><br><input type="password" id="childPassword" placeholder="Create a password"><br><br>
     <button onclick="createChildAccount()">Create Account</button>
-    <button onclick="backToWelcome()">Back</button>
-
+    <button class="secondary" onclick="backToWelcome()">Back</button>
     <p id="childSignupMessage" class="status-message"></p>
 </div>
 
-<!-- CHILD DASHBOARD -->
-<div id="childDashboard" style="display: none;">
-    <h2>Welcome to HomeBase!</h2>
-    <p id="childWelcome"></p>
-
+<div id="childDashboard" style="display:none;">
+    <h2>Welcome to HomeBase!</h2><p id="childWelcome"></p>
     <div class="card">
-        <h3>✅ My Tasks</h3>
-        <p id="taskCounter">0 of 3 tasks completed</p>
-
-        <label><input type="checkbox" class="taskCheckbox"> Finish homework</label>
-        <br><br>
-        <label><input type="checkbox" class="taskCheckbox"> Feed the pets</label>
-        <br><br>
-        <label><input type="checkbox" class="taskCheckbox"> Clean bedroom</label>
+        <h3>📅 Family Calendar</h3>
+        <p>See family activities and add your own events.</p>
+        <div id="childEventForm"></div>
+        <div id="childEventList"></div>
     </div>
-
     <div class="card">
-        <h3>💰 My Allowance</h3>
-        <h2>$0.00</h2>
-        <p>Your earned allowance will appear here.</p>
+        <h3>🔔 Family Reminders</h3>
+        <p>Check the reminders your family has posted.</p>
+        <div id="childReminderList"></div>
     </div>
+    <div class="card"><h3>✅ My Tasks</h3><p id="childTaskSummary">Your assigned tasks will appear here.</p><div id="childTaskList"></div></div>
+    <div class="card"><h3>💰 My Allowance</h3><h2>$0.00</h2><p>Your earned allowance will appear here.</p></div>
+    <button class="secondary" onclick="backToWelcome()">Back to Welcome Screen</button>
 </div>
 
-<!-- FAMILY DASHBOARD: TABLET LANDSCAPE -->
-<div id="dashboard" style="display: none;">
-
+<div id="dashboard" style="display:none;">
     <div class="dashboard-header">
-        <div>
-            <h1>🏠 HomeBase</h1>
-            <p id="dashboardGreeting">Welcome home!</p>
-        </div>
-
-        <div class="dashboard-date">
-            <div id="dashboardDay"></div>
-            <div id="dashboardDate"></div>
-        </div>
+        <div><h1>🏠 HomeBase</h1><p id="dashboardGreeting">Welcome home!</p></div>
+        <div class="dashboard-date"><div id="dashboardDay"></div><div id="dashboardDate"></div></div>
     </div>
-
     <div class="dashboard-grid">
-
         <div class="dashboard-column">
-            <div class="dashboard-card">
-                <h2>📊 Today's Overview</h2>
-                <p class="muted">Family tasks completed</p>
-                <div class="overview-number" id="familyTaskProgress">0/3</div>
-                <p id="familyTaskMessage">Let's get today started!</p>
-            </div>
-
-            <div class="dashboard-card">
-                <h2>✅ Today's Family Tasks</h2>
-                <p class="section-description">Check off tasks as they are completed.</p>
-
-                <label class="task-item">
-                    <input type="checkbox" class="familyTask">
-                    Finish homework
-                </label>
-
-                <label class="task-item">
-                    <input type="checkbox" class="familyTask">
-                    Feed the pets
-                </label>
-
-                <label class="task-item">
-                    <input type="checkbox" class="familyTask">
-                    Clean bedroom
-                </label>
-            </div>
+            <div class="dashboard-card"><h2>📊 Today's Overview</h2><p class="muted">Family tasks completed</p><div class="overview-number" id="familyTaskProgress">0/0</div><p id="familyTaskMessage">Let's get today started!</p></div>
+            <div class="dashboard-card"><h2>✅ Today's Family Tasks</h2><div id="familyDashboardTasks"></div></div>
         </div>
-
         <div class="dashboard-column">
             <div class="dashboard-card">
                 <h2>📅 Family Calendar</h2>
-                <p class="section-description">What's happening today?</p>
-
-                <div class="event-item">
-                    <strong>Today's Events</strong>
-                    <p class="muted">No events added yet.</p>
-                </div>
-
-                <div class="event-item">
-                    <strong>Upcoming Events</strong>
-                    <p class="muted">Your family's upcoming activities will appear here.</p>
-                </div>
+                <p class="section-description">Add an event or see what's coming up.</p>
+                <div id="dashboardEventForm"></div>
+                <div id="dashboardEventList"></div>
             </div>
-
-            <div class="dashboard-card">
-                <h2>🔔 Family Reminders</h2>
-                <p class="muted">Important family reminders will appear here.</p>
-            </div>
+            <div class="dashboard-card"><h2>🔔 Family Reminders</h2><p class="section-description">Important notes and things to remember.</p><div id="dashboardReminderList"></div></div>
         </div>
-
         <div class="dashboard-column">
-            <div class="dashboard-card">
-                <h2>👨‍👩‍👧‍👦 Family Members</h2>
-                <p class="section-description">Everyone in your HomeBase.</p>
-                <div id="dashboardMemberList">
-                    <p class="muted">No family members yet.</p>
-                </div>
-            </div>
-
-            <div class="assistant-card">
-                <h2>🤖 HomeBase Assistant</h2>
-                <p>Your family's helpful assistant is coming soon!</p>
-                <p class="muted">
-                    Soon you'll be able to ask questions like:
-                    "What does everyone need to finish today?"
-                </p>
-
-                <button disabled style="opacity: 0.6;">
-                    Voice Assistant Coming Soon
-                </button>
-            </div>
+            <div class="dashboard-card"><h2>👨‍👩‍👧‍👦 Family Members</h2><div id="dashboardMemberList"></div></div>
+            <div class="assistant-card"><h2>🤖 HomeBase Assistant</h2><p>Your family's helpful assistant is coming soon!</p><button disabled>Voice Assistant Coming Soon</button></div>
         </div>
-
     </div>
-
-    <button class="back-button" onclick="backToWelcome()">
-        Back to Welcome Screen
-    </button>
+    <button class="back-button" onclick="backToWelcome()">Back to Welcome Screen</button>
 </div>
 
-<!-- JAVASCRIPT -->
 <script>
+const screenIds = ["welcomeScreen","familyLogin","accountType","parentSignup","familySetup","parentDashboard","settingsPage","accountInfoPage","familyManagementPage","childSignup","childDashboard","dashboard"];
 
 function hideAllScreens() {
-    const screens = [
-        "welcomeScreen",
-        "familyLogin",
-        "accountType",
-        "parentSignup",
-        "familySetup",
-        "parentDashboard",
-        "settingsPage",
-        "accountInfoPage",
-        "familyManagementPage",
-        "childSignup",
-        "childDashboard",
-        "dashboard"
-    ];
-
-    screens.forEach(function(id) {
-        document.getElementById(id).style.display = "none";
-    });
+    screenIds.forEach(id => document.getElementById(id).style.display = "none");
 }
-
-function backToWelcome() {
-    hideAllScreens();
-    document.getElementById("welcomeScreen").style.display = "block";
-}
-
-function showAccountType() {
-    hideAllScreens();
-    document.getElementById("accountType").style.display = "block";
-}
-
-function showFamilyLogin() {
-    hideAllScreens();
-    document.getElementById("familyLogin").style.display = "block";
-}
-
-function selectRole(role) {
-    hideAllScreens();
-
-    if (role === "Parent") {
-        document.getElementById("parentSignup").style.display = "block";
-    } else {
-        document.getElementById("childSignup").style.display = "block";
-    }
-}
+function backToWelcome() { hideAllScreens(); document.getElementById("welcomeScreen").style.display = "block"; }
+function showAccountType() { hideAllScreens(); document.getElementById("accountType").style.display = "block"; }
+function showFamilyLogin() { hideAllScreens(); document.getElementById("familyLogin").style.display = "block"; }
+function selectRole(role) { hideAllScreens(); document.getElementById(role === "Parent" ? "parentSignup" : "childSignup").style.display = "block"; }
 
 function showFamilySetup() {
     const name = document.getElementById("parentName").value.trim();
     const email = document.getElementById("parentEmail").value.trim();
     const password = document.getElementById("parentPassword").value;
-
-    if (!name || !email || !password) {
-        alert("Please fill in your name, email, and password.");
-        return;
-    }
-
-    if (!document.getElementById("parentEmail").checkValidity()) {
-        alert("Please enter a valid email address.");
-        return;
-    }
-
+    if (!name || !email || !password) { alert("Please fill in your name, email, and password."); return; }
+    if (!document.getElementById("parentEmail").checkValidity()) { alert("Please enter a valid email address."); return; }
     localStorage.setItem("homeBaseParentName", name);
     localStorage.setItem("homeBaseParentEmail", email);
-
-    hideAllScreens();
-    document.getElementById("familySetup").style.display = "block";
+    hideAllScreens(); document.getElementById("familySetup").style.display = "block";
 }
-
 function getFamilyMembers() {
-    try {
-        return JSON.parse(localStorage.getItem("homeBaseMembers")) || [];
-    } catch (error) {
-        return [];
-    }
+    try { return JSON.parse(localStorage.getItem("homeBaseMembers")) || []; } catch { return []; }
 }
-
-function saveFamilyMembers(members) {
-    localStorage.setItem("homeBaseMembers", JSON.stringify(members));
+function saveFamilyMembers(members) { localStorage.setItem("homeBaseMembers", JSON.stringify(members)); }
+function getTasks() {
+    try { return JSON.parse(localStorage.getItem("homeBaseTasks")) || []; } catch { return []; }
 }
+function saveTasks(tasks) { localStorage.setItem("homeBaseTasks", JSON.stringify(tasks)); }
 
 function createFamily() {
     const familyName = document.getElementById("familyName").value.trim();
-
-    if (!familyName) {
-        alert("Please enter your family name.");
-        return;
-    }
-
+    if (!familyName) { alert("Please enter your family name."); return; }
     const existingCode = localStorage.getItem("homeBaseFamilyCode");
-
-    if (existingCode) {
-        const replaceFamily = confirm(
-            "A family already exists in this browser. Creating a new one will replace its local demo family information. Continue?"
-        );
-
-        if (!replaceFamily) {
-            return;
-        }
-    }
-
+    if (existingCode && !confirm("A family already exists in this browser. Replace its local demo family?")) return;
     const code = "HOME-" + Math.random().toString(36).substring(2, 8).toUpperCase();
     const parentName = localStorage.getItem("homeBaseParentName") || "Parent";
-
+    localStorage.setItem("homeBaseCurrentRole", "Parent");
     localStorage.setItem("homeBaseFamilyName", familyName);
     localStorage.setItem("homeBaseFamilyCode", code);
-
-    const members = [
-        {
-            name: parentName,
-            role: "Parent"
-        }
-    ];
-
-    saveFamilyMembers(members);
+    saveFamilyMembers([{ name: parentName, role: "Parent" }]);
+    saveTasks([]);
+    saveEvents([]);
+    saveReminders([]);
     renderFamilyMembers();
-
     hideAllScreens();
     document.getElementById("parentDashboard").style.display = "block";
-    document.getElementById("parentDashboardGreeting").textContent =
-        "Welcome to " + familyName + "!";
+    document.getElementById("parentDashboardGreeting").textContent = "Welcome to " + familyName + "!";
+    renderTaskManager();
+    renderCalendarViews();
+    renderReminderViews();
 }
 
 function createChildAccount() {
@@ -669,247 +278,583 @@ function createChildAccount() {
     const childEmail = document.getElementById("childEmail").value.trim();
     const enteredCode = document.getElementById("familyCode").value.trim().toUpperCase();
     const childPassword = document.getElementById("childPassword").value;
-
     const savedCode = localStorage.getItem("homeBaseFamilyCode");
-    const savedFamilyName = localStorage.getItem("homeBaseFamilyName");
-
-    if (!childName || !enteredCode || !childPassword) {
-        alert("Please fill in your name, family code, and password.");
-        return;
-    }
-
-    if (!savedCode || enteredCode !== savedCode || !savedFamilyName) {
-        alert("That family invitation code is incorrect. Please check it and try again.");
-        return;
-    }
-
-    if (childEmail && !document.getElementById("childEmail").checkValidity()) {
-        alert("Please enter a valid email address.");
-        return;
-    }
-
+    const familyName = localStorage.getItem("homeBaseFamilyName");
+    if (!childName || !enteredCode || !childPassword) { alert("Please fill in your name, family code, and password."); return; }
+    if (!savedCode || enteredCode !== savedCode || !familyName) { alert("That family invitation code is incorrect."); return; }
+    if (childEmail && !document.getElementById("childEmail").checkValidity()) { alert("Please enter a valid email address."); return; }
     const members = getFamilyMembers();
-
-    const alreadyExists = members.some(function(member) {
-        return member.name.toLowerCase() === childName.toLowerCase();
-    });
-
-    if (alreadyExists) {
-        alert("A family member with that name is already registered in this demo.");
-        return;
-    }
-
-    members.push({
-        name: childName,
-        role: "Child",
-        email: childEmail
-    });
-
+    if (members.some(member => member.name.toLowerCase() === childName.toLowerCase())) { alert("A family member with that name is already registered in this demo."); return; }
+    members.push({ name: childName, role: "Child", email: childEmail });
     saveFamilyMembers(members);
-    renderFamilyMembers();
-
     localStorage.setItem("homeBaseCurrentChild", childName);
-
+    localStorage.setItem("homeBaseCurrentRole", "Child");
     hideAllScreens();
     document.getElementById("childDashboard").style.display = "block";
-    document.getElementById("childWelcome").textContent =
-        "Welcome, " + childName + "! You're part of " + savedFamilyName + ".";
+    document.getElementById("childWelcome").textContent = "Welcome, " + childName + "! You're part of " + familyName + ".";
+    renderChildTasks();
+    renderCalendarViews();
+    renderReminderViews();
 }
 
 function renderFamilyMembers() {
     const members = getFamilyMembers();
-
-    const containers = [
-        document.getElementById("parentMemberList"),
-        document.getElementById("managementMemberList"),
-        document.getElementById("dashboardMemberList")
-    ];
-
-    containers.forEach(function(container) {
+    ["parentMemberList","managementMemberList","dashboardMemberList"].forEach(id => {
+        const container = document.getElementById(id);
         if (!container) return;
-
-        container.innerHTML = "";
-
-        if (members.length === 0) {
-            container.textContent = "No family members yet.";
-            return;
-        }
-
-        members.forEach(function(member) {
-            const item = document.createElement("div");
-            item.className = "member-item";
-
-            const icon = document.createElement("div");
-            icon.className = "member-icon";
-            icon.textContent = member.role === "Parent" ? "👨" : "🧒";
-
+        container.replaceChildren();
+        if (!members.length) { container.textContent = "No family members yet."; return; }
+        members.forEach(member => {
+            const item = document.createElement("div"); item.className = "member-item";
+            const icon = document.createElement("div"); icon.className = "member-icon"; icon.textContent = member.role === "Parent" ? "👨" : "🧒";
             const details = document.createElement("div");
-
-            const name = document.createElement("strong");
-            name.textContent = member.name;
-
-            const role = document.createElement("p");
-            role.className = "muted";
-            role.textContent = member.role;
-
-            details.appendChild(name);
-            details.appendChild(role);
-            item.appendChild(icon);
-            item.appendChild(details);
-            container.appendChild(item);
+            const name = document.createElement("strong"); name.textContent = member.name;
+            const role = document.createElement("p"); role.className = "muted"; role.textContent = member.role;
+            details.append(name, role); item.append(icon, details); container.appendChild(item);
         });
     });
 }
-
 function openFamilyDashboard() {
     const enteredCode = document.getElementById("loginFamilyCode").value.trim().toUpperCase();
     const savedCode = localStorage.getItem("homeBaseFamilyCode");
-
-    if (!enteredCode) {
-        alert("Please enter your family code.");
-        return;
-    }
-
-    if (!savedCode || enteredCode !== savedCode) {
-        alert("Incorrect family code. Please try again.");
-        return;
-    }
-
-    hideAllScreens();
-    document.getElementById("dashboard").style.display = "block";
-
-    loadFamilyDashboard();
+    if (!enteredCode || enteredCode !== savedCode) { alert("Incorrect family code. Please try again."); return; }
+    localStorage.setItem("homeBaseCurrentRole", "Dashboard");
+    localStorage.removeItem("homeBaseCurrentChild");
+    hideAllScreens(); document.getElementById("dashboard").style.display = "block"; loadFamilyDashboard();
 }
-
 function loadFamilyDashboard() {
     const familyName = localStorage.getItem("homeBaseFamilyName");
-
-    document.getElementById("dashboardGreeting").textContent =
-        familyName ? "Welcome to " + familyName + "!" : "Welcome home!";
-
+    document.getElementById("dashboardGreeting").textContent = familyName ? "Welcome to " + familyName + "!" : "Welcome home!";
     const today = new Date();
-
-    document.getElementById("dashboardDay").textContent =
-        today.toLocaleDateString(undefined, { weekday: "long" });
-
-    document.getElementById("dashboardDate").textContent =
-        today.toLocaleDateString(undefined, {
-            month: "long",
-            day: "numeric",
-            year: "numeric"
-        });
-
-    renderFamilyMembers();
+    document.getElementById("dashboardDay").textContent = today.toLocaleDateString(undefined, { weekday: "long" });
+    document.getElementById("dashboardDate").textContent = today.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+    renderFamilyMembers(); renderFamilyDashboardTasks(); renderCalendarViews(); renderReminderViews();
 }
-
-function openSettings() {
-    hideAllScreens();
-    document.getElementById("settingsPage").style.display = "block";
-}
-
+function openSettings() { hideAllScreens(); document.getElementById("settingsPage").style.display = "block"; }
 function closeSettings() {
-    hideAllScreens();
-    document.getElementById("parentDashboard").style.display = "block";
-    renderFamilyMembers();
+    hideAllScreens(); document.getElementById("parentDashboard").style.display = "block";
+    renderFamilyMembers(); renderTaskManager(); renderCalendarViews(); renderReminderViews();
 }
-
 function openAccountInfo() {
     document.getElementById("settingsPage").style.display = "none";
-
-    document.getElementById("accountNameDisplay").textContent =
-        localStorage.getItem("homeBaseParentName") || "No name saved yet.";
-
-    document.getElementById("accountEmailDisplay").textContent =
-        localStorage.getItem("homeBaseParentEmail") || "No email saved yet.";
-
+    document.getElementById("accountNameDisplay").textContent = localStorage.getItem("homeBaseParentName") || "No name saved yet.";
+    document.getElementById("accountEmailDisplay").textContent = localStorage.getItem("homeBaseParentEmail") || "No email saved yet.";
     document.getElementById("accountInfoPage").style.display = "block";
 }
-
-function closeAccountInfo() {
-    document.getElementById("accountInfoPage").style.display = "none";
-    document.getElementById("settingsPage").style.display = "block";
-}
-
+function closeAccountInfo() { document.getElementById("accountInfoPage").style.display = "none"; document.getElementById("settingsPage").style.display = "block"; }
 function openFamilyManagement() {
     document.getElementById("settingsPage").style.display = "none";
-
-    document.getElementById("displayFamilyName").textContent =
-        localStorage.getItem("homeBaseFamilyName") || "No family name saved yet.";
-
-    document.getElementById("displayInvitationCode").textContent =
-        localStorage.getItem("homeBaseFamilyCode") || "No code generated yet.";
-
-    renderFamilyMembers();
-
-    document.getElementById("familyManagementPage").style.display = "block";
+    document.getElementById("displayFamilyName").textContent = localStorage.getItem("homeBaseFamilyName") || "No family name saved yet.";
+    document.getElementById("displayInvitationCode").textContent = localStorage.getItem("homeBaseFamilyCode") || "No code generated yet.";
+    renderFamilyMembers(); document.getElementById("familyManagementPage").style.display = "block";
 }
-
-function closeFamilyManagement() {
-    document.getElementById("familyManagementPage").style.display = "none";
-    document.getElementById("settingsPage").style.display = "block";
-}
-
+function closeFamilyManagement() { document.getElementById("familyManagementPage").style.display = "none"; document.getElementById("settingsPage").style.display = "block"; }
 function copyInvitationCode() {
     const code = localStorage.getItem("homeBaseFamilyCode");
-
-    if (!code) {
-        alert("There is no invitation code to copy yet.");
-        return;
-    }
-
+    if (!code) { alert("There is no invitation code to copy yet."); return; }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(code)
-            .then(function() {
-                alert("Invitation code copied!");
-            })
-            .catch(function() {
-                alert("Your invitation code is: " + code);
+        navigator.clipboard.writeText(code).then(() => alert("Invitation code copied!")).catch(() => alert("Your invitation code is: " + code));
+    } else alert("Your invitation code is: " + code);
+}
+
+/* TASK SYSTEM */
+function renderTaskManager() {
+    const children = getFamilyMembers().filter(member => member.role === "Child");
+    const select = document.getElementById("newTaskAssignee"); select.replaceChildren();
+    if (!children.length) {
+        const option = document.createElement("option"); option.value = ""; option.textContent = "Add a child account first";
+        select.appendChild(option); select.disabled = true;
+    } else {
+        select.disabled = false;
+        children.forEach(child => { const option = document.createElement("option"); option.value = child.name; option.textContent = child.name; select.appendChild(option); });
+    }
+    renderParentTasks(); renderApprovalTasks();
+}
+function createTask() {
+    const name = document.getElementById("newTaskName").value.trim();
+    const assignee = document.getElementById("newTaskAssignee").value;
+    const dueDate = document.getElementById("newTaskDueDate").value;
+    if (!name) { alert("Please enter a task name."); return; }
+    if (!assignee) { alert("Please create a child account before assigning a task."); return; }
+    const tasks = getTasks();
+    tasks.push({ id: Date.now().toString() + Math.random().toString(36).substring(2,7), name, assignee, dueDate, status: "Assigned", submissionPhoto: null, createdAt: new Date().toISOString() });
+    saveTasks(tasks); document.getElementById("newTaskName").value = ""; document.getElementById("newTaskDueDate").value = "";
+    document.getElementById("taskCreateMessage").textContent = "Task assigned to " + assignee + "!";
+    renderTaskManager(); renderFamilyDashboardTasks();
+}
+function renderParentTasks() {
+    const container = document.getElementById("parentTaskList"); const tasks = getTasks(); container.replaceChildren();
+    if (!tasks.length) { container.textContent = "No tasks have been created yet."; return; }
+    tasks.forEach(task => {
+        const card = document.createElement("div"); card.className = "task-card";
+        const title = document.createElement("h3"); title.textContent = task.name;
+        const assigned = document.createElement("p"); assigned.className = "muted"; assigned.textContent = "Assigned to: " + task.assignee;
+        const status = document.createElement("span"); status.className = "task-status"; status.textContent = task.status;
+        if (task.status === "Pending Approval") status.classList.add("pending");
+        if (task.status === "Completed") status.classList.add("completed");
+        if (task.status === "Needs More Work") status.classList.add("rejected");
+        card.append(title, assigned, status);
+        if (task.dueDate) { const due = document.createElement("p"); due.className = "muted"; due.textContent = "Due: " + task.dueDate; card.appendChild(due); }
+        const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete Task"; remove.onclick = () => deleteTask(task.id);
+        card.appendChild(remove); container.appendChild(card);
+    });
+}
+function renderApprovalTasks() {
+    const container = document.getElementById("approvalTaskList"); const tasks = getTasks().filter(task => task.status === "Pending Approval"); container.replaceChildren();
+    if (!tasks.length) { container.textContent = "No tasks are waiting for approval."; return; }
+    tasks.forEach(task => {
+        const card = document.createElement("div"); card.className = "task-card";
+        const title = document.createElement("h3"); title.textContent = task.name;
+        const who = document.createElement("p"); who.textContent = task.assignee + " submitted this task for approval.";
+        card.append(title, who);
+        if (task.submissionPhoto) {
+            const heading = document.createElement("p"); heading.className = "photo-label"; heading.textContent = "📷 Submitted Photo";
+            const photo = document.createElement("img"); photo.className = "submission-photo"; photo.src = task.submissionPhoto; photo.alt = "Photo submitted for " + task.name;
+            card.append(heading, photo);
+        } else { const noPhoto = document.createElement("p"); noPhoto.className = "muted"; noPhoto.textContent = "No photo was attached."; card.appendChild(noPhoto); }
+        const approve = document.createElement("button"); approve.textContent = "Approve"; approve.onclick = () => approveTask(task.id);
+        const reject = document.createElement("button"); reject.className = "danger"; reject.textContent = "Needs More Work"; reject.onclick = () => rejectTask(task.id);
+        card.append(approve, reject); container.appendChild(card);
+    });
+}
+function compressPhoto(file) {
+    return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith("image/")) { reject(new Error("Please choose an image file.")); return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const image = new Image();
+            image.onload = () => {
+                const maxSize = 900; let width = image.width; let height = image.height;
+                if (width > height && width > maxSize) { height = Math.round(height * maxSize / width); width = maxSize; }
+                else if (height > maxSize) { width = Math.round(width * maxSize / height); height = maxSize; }
+                const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;
+                canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+                resolve(canvas.toDataURL("image/jpeg", 0.65));
+            };
+            image.onerror = () => reject(new Error("Could not read that image.")); image.src = reader.result;
+        };
+        reader.onerror = () => reject(new Error("Could not load that photo.")); reader.readAsDataURL(file);
+    });
+}
+function renderChildTasks() {
+    const childName = localStorage.getItem("homeBaseCurrentChild"); const container = document.getElementById("childTaskList"); container.replaceChildren();
+    const tasks = getTasks().filter(task => task.assignee === childName); const finished = tasks.filter(task => task.status === "Completed").length;
+    document.getElementById("childTaskSummary").textContent = finished + " of " + tasks.length + " tasks completed.";
+    if (!tasks.length) { container.textContent = "You don't have any tasks assigned yet."; return; }
+    tasks.forEach(task => {
+        const card = document.createElement("div"); card.className = "task-card";
+        const title = document.createElement("h3"); title.textContent = task.name; card.appendChild(title);
+        if (task.dueDate) { const due = document.createElement("p"); due.className = "muted"; due.textContent = "Due: " + task.dueDate; card.appendChild(due); }
+        const status = document.createElement("span"); status.className = "task-status"; status.textContent = task.status;
+        if (task.status === "Pending Approval") status.classList.add("pending");
+        if (task.status === "Completed") status.classList.add("completed");
+        if (task.status === "Needs More Work") status.classList.add("rejected");
+        card.appendChild(status);
+        if (task.status === "Assigned" || task.status === "Needs More Work") {
+            const label = document.createElement("p"); label.className = "photo-label"; label.textContent = "📷 Add a photo (optional)";
+            const input = document.createElement("input"); input.type = "file"; input.accept = "image/*"; input.setAttribute("capture", "environment"); input.setAttribute("aria-label", "Take or choose a photo for " + task.name);
+            const preview = document.createElement("img"); preview.className = "submission-photo"; preview.alt = "Selected chore photo preview"; preview.style.display = "none";
+            let selectedPhoto = null;
+            input.addEventListener("change", async () => {
+                const file = input.files[0]; if (!file) { selectedPhoto = null; preview.style.display = "none"; return; }
+                try { preview.style.display = "none"; selectedPhoto = await compressPhoto(file); preview.src = selectedPhoto; preview.style.display = "block"; }
+                catch (error) { selectedPhoto = null; input.value = ""; alert(error.message); }
             });
-    } else {
-        alert("Your invitation code is: " + code);
+            const submit = document.createElement("button"); submit.textContent = "Submit for Approval"; submit.onclick = () => submitTask(task.id, selectedPhoto, submit);
+            card.append(label, input, preview, submit);
+        }
+        if (task.status === "Pending Approval" && task.submissionPhoto) {
+            const label = document.createElement("p"); label.className = "photo-label"; label.textContent = "Your submitted photo:";
+            const photo = document.createElement("img"); photo.className = "submission-photo"; photo.src = task.submissionPhoto; photo.alt = "Your submitted chore photo";
+            card.append(label, photo);
+        }
+        container.appendChild(card);
+    });
+}
+function submitTask(id, photo, button) {
+    const tasks = getTasks(); const task = tasks.find(item => item.id === id); if (!task) return;
+    if (button) { button.disabled = true; button.textContent = "Submitting..."; }
+    try {
+        task.status = "Pending Approval"; task.submissionPhoto = photo || null; task.submittedAt = new Date().toISOString();
+        saveTasks(tasks); renderChildTasks(); renderTaskManager(); renderFamilyDashboardTasks();
+    } catch (error) {
+        if (button) { button.disabled = false; button.textContent = "Submit for Approval"; }
+        alert("The submission couldn't be saved. The browser may be out of storage space. Try a smaller photo.");
     }
 }
-
-function updateTaskCounter() {
-    const tasks = document.querySelectorAll(".taskCheckbox");
-    const completed = document.querySelectorAll(".taskCheckbox:checked").length;
-
-    document.getElementById("taskCounter").textContent =
-        completed + " of " + tasks.length + " tasks completed";
+function approveTask(id) {
+    const tasks = getTasks(); const task = tasks.find(item => item.id === id); if (!task) return;
+    task.status = "Completed"; task.approvedAt = new Date().toISOString(); saveTasks(tasks);
+    renderTaskManager(); renderChildTasks(); renderFamilyDashboardTasks();
+}
+function rejectTask(id) {
+    const tasks = getTasks(); const task = tasks.find(item => item.id === id); if (!task) return;
+    task.status = "Needs More Work"; saveTasks(tasks); renderTaskManager(); renderChildTasks(); renderFamilyDashboardTasks();
+}
+function deleteTask(id) {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+    saveTasks(getTasks().filter(task => task.id !== id)); renderTaskManager(); renderChildTasks(); renderFamilyDashboardTasks();
+}
+function renderFamilyDashboardTasks() {
+    const container = document.getElementById("familyDashboardTasks"); if (!container) return;
+    const tasks = getTasks(); container.replaceChildren();
+    if (!tasks.length) container.textContent = "No family tasks have been added yet.";
+    else tasks.forEach(task => {
+        const item = document.createElement("div"); item.className = "task-item";
+        const text = document.createElement("div"); const title = document.createElement("strong"); title.textContent = task.name;
+        const who = document.createElement("p"); who.className = "muted"; who.textContent = task.assignee + " · " + task.status;
+        text.append(title, who); item.appendChild(text); container.appendChild(item);
+    });
+    const completed = tasks.filter(task => task.status === "Completed").length;
+    document.getElementById("familyTaskProgress").textContent = completed + "/" + tasks.length;
+    document.getElementById("familyTaskMessage").textContent = tasks.length && completed === tasks.length ? "All tasks completed! Great job!" : completed ? "You're making progress!" : "Let's get today started!";
 }
 
-document.querySelectorAll(".taskCheckbox").forEach(function(checkbox) {
-    checkbox.addEventListener("change", updateTaskCounter);
-});
-
-function updateFamilyTaskProgress() {
-    const tasks = document.querySelectorAll(".familyTask");
-    const completed = document.querySelectorAll(".familyTask:checked").length;
-
-    document.getElementById("familyTaskProgress").textContent =
-        completed + "/" + tasks.length;
-
-    if (completed === tasks.length) {
-        document.getElementById("familyTaskMessage").textContent =
-            "All tasks completed! Great job!";
-    } else if (completed === 0) {
-        document.getElementById("familyTaskMessage").textContent =
-            "Let's get today started!";
-    } else {
-        document.getElementById("familyTaskMessage").textContent =
-            "You're making progress!";
+/* FAMILY CALENDAR */
+function getEvents() {
+    try { return JSON.parse(localStorage.getItem("homeBaseEvents")) || []; } catch { return []; }
+}
+function saveEvents(events) { localStorage.setItem("homeBaseEvents", JSON.stringify(events)); }
+function getEventCreator() {
+    const role = localStorage.getItem("homeBaseCurrentRole") || "Dashboard";
+    if (role === "Child") return { name: localStorage.getItem("homeBaseCurrentChild") || "Child", role: "Child" };
+    if (role === "Parent") return { name: localStorage.getItem("homeBaseParentName") || "Parent", role: "Parent" };
+    return { name: "Family Dashboard", role: "Dashboard" };
+}
+function buildEventForm(containerId, mode) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.replaceChildren();
+    const heading = document.createElement("h3"); heading.textContent = "＋ Add a Family Event";
+    const form = document.createElement("div"); form.className = "task-card";
+    const nameLabel = document.createElement("label"); nameLabel.textContent = "Event Name";
+    const name = document.createElement("input"); name.type = "text"; name.placeholder = "Example: Soccer practice"; name.style.width = "100%"; name.id = mode + "EventName";
+    const fields = document.createElement("div"); fields.className = "form-grid";
+    const dateWrap = document.createElement("div"); dateWrap.className = "form-field";
+    const dateLabel = document.createElement("label"); dateLabel.textContent = "Date";
+    const date = document.createElement("input"); date.type = "date"; date.id = mode + "EventDate";
+    dateWrap.append(dateLabel, date);
+    const timeWrap = document.createElement("div"); timeWrap.className = "form-field";
+    const timeLabel = document.createElement("label"); timeLabel.textContent = "Time (optional)";
+    const time = document.createElement("input"); time.type = "time"; time.id = mode + "EventTime";
+    timeWrap.append(timeLabel, time); fields.append(dateWrap, timeWrap);
+    const locationLabel = document.createElement("label"); locationLabel.textContent = "Location (optional)";
+    const location = document.createElement("input"); location.type = "text"; location.placeholder = "Where is it?"; location.style.width = "100%"; location.id = mode + "EventLocation";
+    const notesLabel = document.createElement("label"); notesLabel.textContent = "Notes (optional)";
+    const notes = document.createElement("textarea"); notes.placeholder = "Add any helpful details..."; notes.id = mode + "EventNotes";
+    const audienceLabel = document.createElement("label"); audienceLabel.textContent = "Who is this event for?";
+    const audience = document.createElement("select"); audience.id = mode + "EventAudience"; audience.style.width = "100%";
+    const everyone = document.createElement("option"); everyone.value = "Everyone"; everyone.textContent = "Everyone";
+    audience.appendChild(everyone);
+    getFamilyMembers().forEach(member => {
+        const option = document.createElement("option"); option.value = member.name; option.textContent = member.name; audience.appendChild(option);
+    });
+    const save = document.createElement("button"); save.textContent = "Add Event"; save.onclick = () => createEvent(mode);
+    const message = document.createElement("p"); message.className = "status-message"; message.id = mode + "EventMessage";
+    form.append(nameLabel, name, fields, locationLabel, location, notesLabel, notes, audienceLabel, audience, save, message);
+    container.append(heading, form);
+}
+function createEvent(mode) {
+    const name = document.getElementById(mode + "EventName").value.trim();
+    const date = document.getElementById(mode + "EventDate").value;
+    const time = document.getElementById(mode + "EventTime").value;
+    const location = document.getElementById(mode + "EventLocation").value.trim();
+    const notes = document.getElementById(mode + "EventNotes").value.trim();
+    const audience = document.getElementById(mode + "EventAudience").value;
+    if (!name || !date) { alert("Please enter an event name and date."); return; }
+    const creator = getEventCreator();
+    const events = getEvents();
+    events.push({
+        id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+        name, date, time, location, notes, audience,
+        createdBy: creator.name, createdByRole: creator.role,
+        createdAt: new Date().toISOString()
+    });
+    try {
+        saveEvents(events);
+        document.getElementById(mode + "EventName").value = "";
+        document.getElementById(mode + "EventDate").value = "";
+        document.getElementById(mode + "EventTime").value = "";
+        document.getElementById(mode + "EventLocation").value = "";
+        document.getElementById(mode + "EventNotes").value = "";
+        document.getElementById(mode + "EventAudience").value = "Everyone";
+        document.getElementById(mode + "EventMessage").textContent = "Event added to the family calendar!";
+        renderCalendarViews();
+    } catch (error) { alert("The event could not be saved. Your browser may be out of storage space."); }
+}
+function formatEventDate(dateString) {
+    const parts = dateString.split("-").map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+}
+function renderEventList(containerId, mode) {
+    const container = document.getElementById(containerId); if (!container) return;
+    container.replaceChildren();
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayString = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
+    const currentRole = localStorage.getItem("homeBaseCurrentRole") || "Dashboard";
+    const currentChild = localStorage.getItem("homeBaseCurrentChild");
+    let events = getEvents().filter(event => {
+        const visibleTo = event.audience || "Everyone";
+        return visibleTo === "Everyone" || visibleTo === currentChild || currentRole !== "Child";
+    });
+    events.sort((a,b) => (a.date + (a.time || "00:00")).localeCompare(b.date + (b.time || "00:00")));
+    const todayEvents = events.filter(event => event.date === todayString);
+    const upcoming = events.filter(event => event.date > todayString);
+    const past = events.filter(event => event.date < todayString);
+    appendEventGroup(container, "Today's Events", todayEvents, mode);
+    appendEventGroup(container, "Upcoming Events", upcoming, mode);
+    if (mode !== "dashboard" && past.length) appendEventGroup(container, "Past Events", past.slice(-5).reverse(), mode);
+    if (!todayEvents.length && !upcoming.length) {
+        const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No events scheduled for today or upcoming. Add one above!";
+        container.appendChild(empty);
     }
 }
+function appendEventGroup(container, headingText, events, mode) {
+    const heading = document.createElement("h3"); heading.textContent = headingText; container.appendChild(heading);
+    if (!events.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = headingText === "Today's Events" ? "Nothing scheduled today." : "No events here yet."; container.appendChild(empty); return; }
+    events.forEach(event => {
+        const card = document.createElement("div"); card.className = "event-item";
+        const title = document.createElement("strong"); title.textContent = event.name;
+        const date = document.createElement("p"); date.textContent = formatEventDate(event.date) + (event.time ? " · " + formatTime(event.time) : "");
+        const audience = document.createElement("p"); audience.className = "event-meta"; audience.textContent = "For: " + (event.audience || "Everyone") + " · Added by " + (event.createdBy || "Family member");
+        card.append(title, date, audience);
+        if (event.location) { const loc = document.createElement("p"); loc.textContent = "📍 " + event.location; card.appendChild(loc); }
+        if (event.notes) { const note = document.createElement("p"); note.textContent = event.notes; card.appendChild(note); }
+        const canManage = currentUserCanManageEvent(event);
+        if (canManage && mode !== "dashboard") {
+            const actions = document.createElement("div"); actions.className = "event-actions";
+            const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "Edit"; edit.onclick = () => editEvent(event.id, mode);
+            const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete"; remove.onclick = () => deleteEvent(event.id);
+            actions.append(edit, remove); card.appendChild(actions);
+        }
+        container.appendChild(card);
+    });
+}
+function formatTime(time) {
+    const [hour, minute] = time.split(":").map(Number);
+    const date = new Date(); date.setHours(hour, minute, 0, 0);
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+function currentUserCanManageEvent(event) {
+    const user = getEventCreator();
+    if (user.role === "Parent") return true;
+    return event.createdBy === user.name;
+}
+function deleteEvent(id) {
+    if (!confirm("Delete this family event?")) return;
+    const user = getEventCreator(); const events = getEvents(); const event = events.find(item => item.id === id);
+    if (!event || (user.role !== "Parent" && event.createdBy !== user.name)) { alert("You can only delete events you created."); return; }
+    saveEvents(events.filter(item => item.id !== id)); renderCalendarViews();
+}
+function editEvent(id, mode) {
+    const events = getEvents(); const event = events.find(item => item.id === id); if (!event) return;
+    const user = getEventCreator();
+    if (user.role !== "Parent" && event.createdBy !== user.name) { alert("You can only edit events you created."); return; }
+    const newName = prompt("Event name:", event.name); if (newName === null) return;
+    if (!newName.trim()) { alert("Event name cannot be blank."); return; }
+    const newDate = prompt("Date (YYYY-MM-DD):", event.date); if (newDate === null) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate) || Number.isNaN(new Date(newDate + "T00:00:00").getTime())) { alert("Please use a valid date in YYYY-MM-DD format."); return; }
+    const newTime = prompt("Time (HH:MM), or leave blank:", event.time || ""); if (newTime === null) return;
+    if (newTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(newTime)) { alert("Please enter a valid time such as 15:30."); return; }
+    const newLocation = prompt("Location (optional):", event.location || ""); if (newLocation === null) return;
+    const newNotes = prompt("Notes (optional):", event.notes || ""); if (newNotes === null) return;
+    const newAudience = prompt("Who is it for? Enter Everyone or a family member's exact name:", event.audience || "Everyone"); if (newAudience === null) return;
+    const validAudience = newAudience.trim() === "Everyone" || getFamilyMembers().some(member => member.name.toLowerCase() === newAudience.trim().toLowerCase());
+    if (!validAudience) { alert("Please enter Everyone or the exact name of a family member."); return; }
+    event.name = newName.trim(); event.date = newDate; event.time = newTime; event.location = newLocation.trim(); event.notes = newNotes.trim();
+    event.audience = newAudience.trim() === "Everyone" ? "Everyone" : getFamilyMembers().find(member => member.name.toLowerCase() === newAudience.trim().toLowerCase()).name;
+    event.updatedAt = new Date().toISOString(); saveEvents(events); renderCalendarViews();
+}
+function renderCalendarViews() {
+    buildEventForm("parentEventForm", "parent");
+    buildEventForm("childEventForm", "child");
+    buildEventForm("dashboardEventForm", "dashboard");
+    renderEventList("parentEventList", "parent");
+    renderEventList("childEventList", "child");
+    renderEventList("dashboardEventList", "dashboard");
+}
 
-document.querySelectorAll(".familyTask").forEach(function(checkbox) {
-    checkbox.addEventListener("change", updateFamilyTaskProgress);
+/* FAMILY REMINDERS */
+function getReminders() {
+    try { return JSON.parse(localStorage.getItem("homeBaseReminders")) || []; } catch { return []; }
+}
+function saveReminders(reminders) {
+    localStorage.setItem("homeBaseReminders", JSON.stringify(reminders));
+}
+function getReminderUser() {
+    if (document.getElementById("parentDashboard").style.display !== "none") {
+        return {
+            name: localStorage.getItem("homeBaseParentName") || "Parent",
+            role: "Parent"
+        };
+    }
+
+    if (document.getElementById("childDashboard").style.display !== "none") {
+        return {
+            name: localStorage.getItem("homeBaseCurrentChild") || "Child",
+            role: "Child"
+        };
+    }
+
+    return { name: "Family Dashboard", role: "Dashboard" };
+}
+function buildReminderForm() {
+    const container = document.getElementById("parentReminderForm");
+    if (!container) return;
+    container.replaceChildren();
+    const form = document.createElement("div"); form.className = "task-card";
+    const titleLabel = document.createElement("label"); titleLabel.textContent = "Reminder";
+    const title = document.createElement("input"); title.id = "newReminderTitle"; title.placeholder = "Example: Bring your library books"; title.style.width = "100%";
+    const fields = document.createElement("div"); fields.className = "form-grid";
+    const dateWrap = document.createElement("div"); dateWrap.className = "form-field";
+    const dateLabel = document.createElement("label"); dateLabel.textContent = "Date (optional)";
+    const date = document.createElement("input"); date.type = "date"; date.id = "newReminderDate";
+    dateWrap.append(dateLabel, date);
+    const timeWrap = document.createElement("div"); timeWrap.className = "form-field";
+    const timeLabel = document.createElement("label"); timeLabel.textContent = "Time (optional)";
+    const time = document.createElement("input"); time.type = "time"; time.id = "newReminderTime";
+    timeWrap.append(timeLabel, time); fields.append(dateWrap, timeWrap);
+    const notesLabel = document.createElement("label"); notesLabel.textContent = "Details (optional)";
+    const notes = document.createElement("textarea"); notes.id = "newReminderNotes"; notes.placeholder = "Add any helpful details...";
+    const add = document.createElement("button"); add.textContent = "+ Add Reminder"; add.onclick = createReminder;
+    const message = document.createElement("p"); message.id = "reminderCreateMessage"; message.className = "status-message";
+    form.append(titleLabel, title, fields, notesLabel, notes, add, message);
+    container.appendChild(form);
+}
+function createReminder() {
+    const title = document.getElementById("newReminderTitle").value.trim();
+    const date = document.getElementById("newReminderDate").value;
+    const time = document.getElementById("newReminderTime").value;
+    const notes = document.getElementById("newReminderNotes").value.trim();
+    if (!title) { alert("Please enter a reminder."); return; }
+    const user = getReminderUser();
+    if (user.role !== "Parent") { alert("Only a parent account can create family reminders."); return; }
+    const reminders = getReminders();
+    reminders.push({
+        id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+        title, date, time, notes, createdBy: user.name,
+        createdAt: new Date().toISOString(), acknowledgedBy: []
+    });
+    try {
+        saveReminders(reminders);
+        document.getElementById("newReminderTitle").value = "";
+        document.getElementById("newReminderDate").value = "";
+        document.getElementById("newReminderTime").value = "";
+        document.getElementById("newReminderNotes").value = "";
+        renderReminderViews();
+        document.getElementById("reminderCreateMessage").textContent = "Reminder added for your family!";
+    } catch (error) { alert("The reminder could not be saved. Your browser may be out of storage space."); }
+}
+function formatReminderWhen(reminder) {
+    const parts = [];
+    if (reminder.date) parts.push(formatEventDate(reminder.date));
+    if (reminder.time) parts.push(formatTime(reminder.time));
+    return parts.length ? parts.join(" · ") : "Anytime";
+}
+function renderReminderList(containerId, view) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.replaceChildren();
+    const reminders = getReminders().sort((a, b) => {
+        const aKey = (a.date || "9999-12-31") + (a.time || "00:00");
+        const bKey = (b.date || "9999-12-31") + (b.time || "00:00");
+        return aKey.localeCompare(bKey);
+    });
+    if (!reminders.length) {
+        const empty = document.createElement("p"); empty.className = "muted";
+        empty.textContent = view === "parent" ? "No reminders yet. Add one above!" : "No family reminders right now.";
+        container.appendChild(empty); return;
+    }
+    const user = getReminderUser();
+    reminders.forEach(reminder => {
+        if (!Array.isArray(reminder.acknowledgedBy)) reminder.acknowledgedBy = [];
+        const acknowledged = user.role === "Child" && reminder.acknowledgedBy.includes(user.name);
+        const card = document.createElement("div"); card.className = "reminder-item" + (acknowledged ? " reminder-done" : "");
+        const heading = document.createElement("strong"); heading.textContent = reminder.title;
+        const when = document.createElement("p"); when.className = "event-meta"; when.textContent = formatReminderWhen(reminder);
+        card.append(heading, when);
+        if (reminder.notes) { const note = document.createElement("p"); note.textContent = reminder.notes; card.appendChild(note); }
+        if (view === "parent") {
+            const status = document.createElement("p"); status.className = "reminder-status";
+            const names = reminder.acknowledgedBy.length ? reminder.acknowledgedBy.join(", ") : "Nobody yet";
+            status.textContent = "Acknowledged by: " + names;
+            card.appendChild(status);
+            const actions = document.createElement("div"); actions.className = "event-actions";
+            const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "Edit"; edit.onclick = () => editReminder(reminder.id);
+            const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete"; remove.onclick = () => deleteReminder(reminder.id);
+            actions.append(edit, remove); card.appendChild(actions);
+        } else if (view === "child") {
+            const status = document.createElement("p"); status.className = "reminder-status"; status.textContent = acknowledged ? "✓ You've acknowledged this reminder" : "Please acknowledge when you've read this.";
+            card.appendChild(status);
+            if (!acknowledged) {
+                const button = document.createElement("button"); button.textContent = "I've Seen This"; button.onclick = () => acknowledgeReminder(reminder.id);
+                card.appendChild(button);
+            }
+        } else {
+            const status = document.createElement("p"); status.className = "reminder-status";
+            status.textContent = reminder.acknowledgedBy.length + " family member(s) acknowledged";
+            card.appendChild(status);
+        }
+        container.appendChild(card);
+    });
+}
+function acknowledgeReminder(id) {
+    const user = getReminderUser();
+    if (user.role !== "Child") { alert("Open a child account to acknowledge a reminder."); return; }
+    const reminders = getReminders();
+    const reminder = reminders.find(item => item.id === id);
+    if (!reminder) return;
+    if (!Array.isArray(reminder.acknowledgedBy)) reminder.acknowledgedBy = [];
+    if (!reminder.acknowledgedBy.includes(user.name)) reminder.acknowledgedBy.push(user.name);
+    saveReminders(reminders); renderReminderViews();
+}
+function editReminder(id) {
+    const reminders = getReminders(); const reminder = reminders.find(item => item.id === id);
+    if (!reminder) return;
+    const title = prompt("Reminder:", reminder.title); if (title === null) return;
+    if (!title.trim()) { alert("Reminder cannot be blank."); return; }
+    const date = prompt("Date (YYYY-MM-DD), or leave blank:", reminder.date || ""); if (date === null) return;
+    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(new Date(date + "T00:00:00").getTime()))) { alert("Please enter a valid date in YYYY-MM-DD format."); return; }
+    const time = prompt("Time (HH:MM), or leave blank:", reminder.time || ""); if (time === null) return;
+    if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) { alert("Please enter a valid time such as 15:30."); return; }
+    const notes = prompt("Details (optional):", reminder.notes || ""); if (notes === null) return;
+    reminder.title = title.trim(); reminder.date = date; reminder.time = time; reminder.notes = notes.trim();
+    reminder.updatedAt = new Date().toISOString(); saveReminders(reminders); renderReminderViews();
+}
+function deleteReminder(id) {
+    if (!confirm("Delete this family reminder?")) return;
+    saveReminders(getReminders().filter(item => item.id !== id)); renderReminderViews();
+}
+function renderReminderViews() {
+    buildReminderForm();
+    renderReminderList("parentReminderList", "parent");
+    renderReminderList("childReminderList", "child");
+    renderReminderList("dashboardReminderList", "dashboard");
+}
+
+/* CROSS-TAB UPDATES */
+window.addEventListener("storage", function(event) {
+    if (event.key === "homeBaseTasks") {
+        if (document.getElementById("childDashboard").style.display !== "none") renderChildTasks();
+        if (document.getElementById("parentDashboard").style.display !== "none") renderTaskManager();
+        if (document.getElementById("dashboard").style.display !== "none") renderFamilyDashboardTasks();
+    }
+    if (event.key === "homeBaseMembers") {
+        renderFamilyMembers();
+        if (document.getElementById("parentDashboard").style.display !== "none") renderTaskManager();
+        renderCalendarViews();
+        renderReminderViews();
+    }
+    if (event.key === "homeBaseEvents") {
+        renderCalendarViews();
+    }
+    if (event.key === "homeBaseReminders") {
+        renderReminderViews();
+    }
 });
-
-updateTaskCounter();
-updateFamilyTaskProgress();
 renderFamilyMembers();
-
+renderCalendarViews();
+renderReminderViews();
 </script>
-
 </body>
 </html>

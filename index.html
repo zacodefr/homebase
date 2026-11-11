@@ -53,6 +53,14 @@ h2 { margin-top: 0; }
 .reminder-item p { margin: 7px 0; }
 .reminder-done { background: #e7f2e9; border-left-color: #4f8b60; }
 .reminder-status { font-size: 13px; color: #718077; }
+.feature-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.feature-chip { background: #edf2ee; color: #315c46; border-radius: 20px; padding: 6px 10px; font-size: 13px; }
+.store-item, .shopping-item, .poll-option, .achievement-item { border: 1px solid #e1e8e2; border-radius: 10px; padding: 12px; margin-top: 10px; }
+.shopping-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.shopping-item.purchased { opacity: .65; text-decoration: line-through; }
+.balance-number { font-size: 28px; font-weight: bold; color: #315c46; margin: 6px 0; }
+.poll-bar { height: 8px; background: #e8eee9; border-radius: 20px; overflow: hidden; margin-top: 6px; }
+.poll-bar span { display: block; height: 100%; background: #5d8c6b; }
 @media (max-width: 700px) {
     body { padding: 12px; }
     .form-grid { grid-template-columns: 1fr; }
@@ -131,11 +139,20 @@ h2 { margin-top: 0; }
         <label>Task Name</label><br><input id="newTaskName" placeholder="Example: Take out the trash"><br><br>
         <label>Assign To</label><br><select id="newTaskAssignee"></select><br><br>
         <label>Due Date (optional)</label><br><input type="date" id="newTaskDueDate"><br><br>
+        <label>Reward</label><br><select id="newTaskRewardMode" onchange="toggleTaskRewardFields()"><option value="none">No reward</option><option value="money">Allowance</option><option value="points">Points</option><option value="choice">Let child choose allowance or points</option></select><br><br>
+        <div id="taskRewardFields" style="display:none;">
+            <label>Allowance amount ($)</label><br><input type="number" id="newTaskMoney" min="0" step="0.01" value="1.00"><br><br>
+            <label>Points amount</label><br><input type="number" id="newTaskPoints" min="0" step="1" value="10"><br><br>
+        </div>
         <button onclick="createTask()">+ Create Task</button><p id="taskCreateMessage" class="status-message"></p>
     </div>
     <div class="card"><h3>📋 All Family Tasks</h3><div id="parentTaskList"></div></div>
     <div class="card"><h3>🔔 Tasks Awaiting Approval</h3><div id="approvalTaskList"></div></div>
-    <div class="card"><h3>💰 Allowance</h3><p>Manage your children's allowance. More features coming soon!</p></div>
+    <div class="card"><h3>💰 Allowance & Points</h3><div id="parentAllowanceView"></div></div>
+    <div class="card"><h3>🎁 Rewards Store</h3><div id="parentStoreView"></div></div>
+    <div class="card"><h3>🛒 Family Shopping List</h3><div id="parentShoppingView"></div></div>
+    <div class="card"><h3>🏆 Family Achievements</h3><div id="parentAchievementsView"></div></div>
+    <div class="card"><h3>🗳️ Family Polls</h3><div id="parentPollsView"></div></div>
     <div class="card" onclick="openSettings()" style="cursor:pointer;"><h3>⚙️ Settings</h3><p>Account information, family preferences, security, and more.</p></div>
 </div>
 
@@ -189,8 +206,12 @@ h2 { margin-top: 0; }
         <div id="childReminderList"></div>
     </div>
     <div class="card"><h3>✅ My Tasks</h3><p id="childTaskSummary">Your assigned tasks will appear here.</p><div id="childTaskList"></div></div>
-    <div class="card"><h3>💰 My Allowance</h3><h2>$0.00</h2><p>Your earned allowance will appear here.</p></div>
-    <button class="secondary" onclick="backToWelcome()">Back to Welcome Screen</button>
+    <div class="card"><h3>💰 My Allowance & Points</h3><div id="childAllowanceView"></div></div>
+    <div class="card"><h3>🎁 Rewards Store</h3><div id="childStoreView"></div></div>
+    <div class="card"><h3>🛒 Family Shopping List</h3><div id="childShoppingView"></div></div>
+    <div class="card"><h3>🏆 My Achievements</h3><div id="childAchievementsView"></div></div>
+    <div class="card"><h3>🗳️ Family Polls</h3><div id="childPollsView"></div></div>
+    <button class="secondary back-button" onclick="backToWelcome()">Back to Welcome Screen</button>
 </div>
 
 <div id="dashboard" style="display:none;">
@@ -207,17 +228,21 @@ h2 { margin-top: 0; }
             <div class="dashboard-card">
                 <h2>📅 Family Calendar</h2>
                 <p class="section-description">Add an event or see what's coming up.</p>
-                <div id="dashboardEventForm"></div>
                 <div id="dashboardEventList"></div>
             </div>
-            <div class="dashboard-card"><h2>🔔 Family Reminders</h2><p class="section-description">Important notes and things to remember.</p><div id="dashboardReminderList"></div></div>
+            <div class="dashboard-card"><h2>🔔 Family Reminders</h2><div id="dashboardReminderList"></div></div>
+            <div class="dashboard-card"><h2>🛒 Shopping List</h2><div id="dashboardShoppingView"></div></div>
+            <div class="dashboard-card"><h2>🗳️ Family Polls</h2><div id="dashboardPollsView"></div></div>
         </div>
         <div class="dashboard-column">
-            <div class="dashboard-card"><h2>👨‍👩‍👧‍👦 Family Members</h2><div id="dashboardMemberList"></div></div>
-            <div class="assistant-card"><h2>🤖 HomeBase Assistant</h2><p>Your family's helpful assistant is coming soon!</p><button disabled>Voice Assistant Coming Soon</button></div>
+            <div class="dashboard-card"><h2>👥 Family Members</h2><div id="dashboardMemberList"></div></div>
+            <div class="assistant-card">
+                <h2>🤖 HomeBase Assistant</h2>
+                <p>Your family's helpful home assistant is coming soon!</p>
+                <p class="muted">Voice commands and smart reminders are planned for a future update.</p>
+            </div>
         </div>
     </div>
-    <button class="back-button" onclick="backToWelcome()">Back to Welcome Screen</button>
 </div>
 
 <script>
@@ -258,12 +283,14 @@ function createFamily() {
     const code = "HOME-" + Math.random().toString(36).substring(2, 8).toUpperCase();
     const parentName = localStorage.getItem("homeBaseParentName") || "Parent";
     localStorage.setItem("homeBaseCurrentRole", "Parent");
+    sessionStorage.setItem("homeBaseCurrentRole", "Parent");
     localStorage.setItem("homeBaseFamilyName", familyName);
     localStorage.setItem("homeBaseFamilyCode", code);
     saveFamilyMembers([{ name: parentName, role: "Parent" }]);
     saveTasks([]);
     saveEvents([]);
     saveReminders([]);
+    renderNewFeatureViews();
     renderFamilyMembers();
     hideAllScreens();
     document.getElementById("parentDashboard").style.display = "block";
@@ -271,6 +298,7 @@ function createFamily() {
     renderTaskManager();
     renderCalendarViews();
     renderReminderViews();
+    renderNewFeatureViews();
 }
 
 function createChildAccount() {
@@ -287,7 +315,9 @@ function createChildAccount() {
     if (members.some(member => member.name.toLowerCase() === childName.toLowerCase())) { alert("A family member with that name is already registered in this demo."); return; }
     members.push({ name: childName, role: "Child", email: childEmail });
     saveFamilyMembers(members);
+    sessionStorage.setItem("homeBaseCurrentChild", childName);
     localStorage.setItem("homeBaseCurrentChild", childName);
+    sessionStorage.setItem("homeBaseCurrentRole", "Child");
     localStorage.setItem("homeBaseCurrentRole", "Child");
     hideAllScreens();
     document.getElementById("childDashboard").style.display = "block";
@@ -295,6 +325,7 @@ function createChildAccount() {
     renderChildTasks();
     renderCalendarViews();
     renderReminderViews();
+    renderNewFeatureViews();
 }
 
 function renderFamilyMembers() {
@@ -318,8 +349,8 @@ function openFamilyDashboard() {
     const enteredCode = document.getElementById("loginFamilyCode").value.trim().toUpperCase();
     const savedCode = localStorage.getItem("homeBaseFamilyCode");
     if (!enteredCode || enteredCode !== savedCode) { alert("Incorrect family code. Please try again."); return; }
+    sessionStorage.setItem("homeBaseCurrentRole", "Dashboard");
     localStorage.setItem("homeBaseCurrentRole", "Dashboard");
-    localStorage.removeItem("homeBaseCurrentChild");
     hideAllScreens(); document.getElementById("dashboard").style.display = "block"; loadFamilyDashboard();
 }
 function loadFamilyDashboard() {
@@ -328,12 +359,12 @@ function loadFamilyDashboard() {
     const today = new Date();
     document.getElementById("dashboardDay").textContent = today.toLocaleDateString(undefined, { weekday: "long" });
     document.getElementById("dashboardDate").textContent = today.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
-    renderFamilyMembers(); renderFamilyDashboardTasks(); renderCalendarViews(); renderReminderViews();
+    renderFamilyMembers(); renderFamilyDashboardTasks(); renderCalendarViews(); renderReminderViews(); renderNewFeatureViews();
 }
 function openSettings() { hideAllScreens(); document.getElementById("settingsPage").style.display = "block"; }
 function closeSettings() {
     hideAllScreens(); document.getElementById("parentDashboard").style.display = "block";
-    renderFamilyMembers(); renderTaskManager(); renderCalendarViews(); renderReminderViews();
+    renderFamilyMembers(); renderTaskManager(); renderCalendarViews(); renderReminderViews(); renderNewFeatureViews();
 }
 function openAccountInfo() {
     document.getElementById("settingsPage").style.display = "none";
@@ -344,91 +375,147 @@ function openAccountInfo() {
 function closeAccountInfo() { document.getElementById("accountInfoPage").style.display = "none"; document.getElementById("settingsPage").style.display = "block"; }
 function openFamilyManagement() {
     document.getElementById("settingsPage").style.display = "none";
-    document.getElementById("displayFamilyName").textContent = localStorage.getItem("homeBaseFamilyName") || "No family name saved yet.";
-    document.getElementById("displayInvitationCode").textContent = localStorage.getItem("homeBaseFamilyCode") || "No code generated yet.";
+    document.getElementById("displayFamilyName").textContent = localStorage.getItem("homeBaseFamilyName") || "No family name saved.";
+    document.getElementById("displayInvitationCode").textContent = localStorage.getItem("homeBaseFamilyCode") || "No code available.";
     renderFamilyMembers(); document.getElementById("familyManagementPage").style.display = "block";
 }
 function closeFamilyManagement() { document.getElementById("familyManagementPage").style.display = "none"; document.getElementById("settingsPage").style.display = "block"; }
 function copyInvitationCode() {
-    const code = localStorage.getItem("homeBaseFamilyCode");
-    if (!code) { alert("There is no invitation code to copy yet."); return; }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(code).then(() => alert("Invitation code copied!")).catch(() => alert("Your invitation code is: " + code));
-    } else alert("Your invitation code is: " + code);
+    const code = localStorage.getItem("homeBaseFamilyCode") || "";
+    if (!code) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => alert("Invitation code copied!")).catch(() => alert("Your code is: " + code));
+    else alert("Your code is: " + code);
 }
 
-/* TASK SYSTEM */
-function renderTaskManager() {
-    const children = getFamilyMembers().filter(member => member.role === "Child");
-    const select = document.getElementById("newTaskAssignee"); select.replaceChildren();
-    if (!children.length) {
-        const option = document.createElement("option"); option.value = ""; option.textContent = "Add a child account first";
-        select.appendChild(option); select.disabled = true;
-    } else {
-        select.disabled = false;
-        children.forEach(child => { const option = document.createElement("option"); option.value = child.name; option.textContent = child.name; select.appendChild(option); });
-    }
-    renderParentTasks(); renderApprovalTasks();
+function getTasks() {
+    try { return JSON.parse(localStorage.getItem("homeBaseTasks")) || []; } catch { return []; }
+}
+function saveTasks(tasks) { localStorage.setItem("homeBaseTasks", JSON.stringify(tasks)); }
+function toggleTaskRewardFields() {
+    const mode = document.getElementById("newTaskRewardMode").value;
+    document.getElementById("taskRewardFields").style.display = mode === "none" ? "none" : "block";
 }
 function createTask() {
     const name = document.getElementById("newTaskName").value.trim();
     const assignee = document.getElementById("newTaskAssignee").value;
     const dueDate = document.getElementById("newTaskDueDate").value;
-    if (!name) { alert("Please enter a task name."); return; }
-    if (!assignee) { alert("Please create a child account before assigning a task."); return; }
+    const rewardMode = document.getElementById("newTaskRewardMode").value;
+    const moneyAmount = Math.max(0, Number(document.getElementById("newTaskMoney").value || 0));
+    const pointsAmount = Math.max(0, Math.floor(Number(document.getElementById("newTaskPoints").value || 0)));
+    const message = document.getElementById("taskCreateMessage");
+    if (!name) { message.textContent = "Please enter a task name."; return; }
+    if (!assignee) { message.textContent = "Create a child account before assigning tasks."; return; }
     const tasks = getTasks();
-    tasks.push({ id: Date.now().toString() + Math.random().toString(36).substring(2,7), name, assignee, dueDate, status: "Assigned", submissionPhoto: null, createdAt: new Date().toISOString() });
-    saveTasks(tasks); document.getElementById("newTaskName").value = ""; document.getElementById("newTaskDueDate").value = "";
-    document.getElementById("taskCreateMessage").textContent = "Task assigned to " + assignee + "!";
-    renderTaskManager(); renderFamilyDashboardTasks();
+    tasks.push({ id: Date.now().toString(), name, assignee, dueDate, rewardMode, moneyAmount, pointsAmount, status: "Assigned", photo: "", selectedReward: "", createdAt: new Date().toISOString() });
+    saveTasks(tasks);
+    document.getElementById("newTaskName").value = "";
+    document.getElementById("newTaskDueDate").value = "";
+    message.textContent = "Task assigned to " + assignee + "!";
+    renderTaskManager();
+    renderFamilyDashboardTasks();
+}
+function renderTaskManager() {
+    const select = document.getElementById("newTaskAssignee");
+    if (!select) return;
+    const children = getFamilyMembers().filter(member => member.role === "Child");
+    select.replaceChildren();
+    const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = "Choose a child"; select.appendChild(placeholder);
+    children.forEach(child => { const option = document.createElement("option"); option.value = child.name; option.textContent = child.name; select.appendChild(option); });
+    renderParentTasks(); renderApprovalTasks();
 }
 function renderParentTasks() {
-    const container = document.getElementById("parentTaskList"); const tasks = getTasks(); container.replaceChildren();
+    const container = document.getElementById("parentTaskList"); if (!container) return;
+    container.replaceChildren();
+    const tasks = getTasks();
     if (!tasks.length) { container.textContent = "No tasks have been created yet."; return; }
     tasks.forEach(task => {
         const card = document.createElement("div"); card.className = "task-card";
         const title = document.createElement("h3"); title.textContent = task.name;
-        const assigned = document.createElement("p"); assigned.className = "muted"; assigned.textContent = "Assigned to: " + task.assignee;
-        const status = document.createElement("span"); status.className = "task-status"; status.textContent = task.status;
-        if (task.status === "Pending Approval") status.classList.add("pending");
-        if (task.status === "Completed") status.classList.add("completed");
-        if (task.status === "Needs More Work") status.classList.add("rejected");
-        card.append(title, assigned, status);
-        if (task.dueDate) { const due = document.createElement("p"); due.className = "muted"; due.textContent = "Due: " + task.dueDate; card.appendChild(due); }
-        const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete Task"; remove.onclick = () => deleteTask(task.id);
-        card.appendChild(remove); container.appendChild(card);
+        const assigned = document.createElement("p"); assigned.textContent = "Assigned to: " + task.assignee;
+        const due = document.createElement("p"); due.className = "muted"; due.textContent = task.dueDate ? "Due: " + task.dueDate : "No due date";
+        const status = document.createElement("span"); status.className = "task-status " + (task.status === "Pending Approval" ? "pending" : task.status === "Completed" ? "completed" : task.status === "Needs More Work" ? "rejected" : ""); status.textContent = task.status;
+        card.append(title, assigned, due, status);
+        if (task.rewardMode && task.rewardMode !== "none") { const reward = document.createElement("p"); reward.className = "muted"; reward.textContent = task.rewardMode === "choice" ? "Child chooses: " + money(task.moneyAmount) + " or " + (task.pointsAmount || 0) + " points" : task.rewardMode === "money" ? "Reward: " + money(task.moneyAmount) : "Reward: " + (task.pointsAmount || 0) + " points"; card.appendChild(reward); }
+        const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete"; remove.onclick = () => deleteTask(task.id); card.appendChild(remove);
+        container.appendChild(card);
     });
 }
 function renderApprovalTasks() {
-    const container = document.getElementById("approvalTaskList"); const tasks = getTasks().filter(task => task.status === "Pending Approval"); container.replaceChildren();
-    if (!tasks.length) { container.textContent = "No tasks are waiting for approval."; return; }
+    const container = document.getElementById("approvalTaskList"); if (!container) return;
+    container.replaceChildren();
+    const tasks = getTasks().filter(task => task.status === "Pending Approval");
+    if (!tasks.length) { container.textContent = "No tasks waiting for approval."; return; }
     tasks.forEach(task => {
         const card = document.createElement("div"); card.className = "task-card";
         const title = document.createElement("h3"); title.textContent = task.name;
-        const who = document.createElement("p"); who.textContent = task.assignee + " submitted this task for approval.";
+        const who = document.createElement("p"); who.textContent = "Submitted by: " + task.assignee;
         card.append(title, who);
-        if (task.submissionPhoto) {
-            const heading = document.createElement("p"); heading.className = "photo-label"; heading.textContent = "📷 Submitted Photo";
-            const photo = document.createElement("img"); photo.className = "submission-photo"; photo.src = task.submissionPhoto; photo.alt = "Photo submitted for " + task.name;
-            card.append(heading, photo);
-        } else { const noPhoto = document.createElement("p"); noPhoto.className = "muted"; noPhoto.textContent = "No photo was attached."; card.appendChild(noPhoto); }
+        if (task.photo) { const photo = document.createElement("img"); photo.src = task.photo; photo.className = "submission-photo"; photo.alt = "Task completion photo"; card.appendChild(photo); }
+        if (task.selectedReward) { const choice = document.createElement("p"); choice.textContent = "Child selected: " + (task.selectedReward === "money" ? "Allowance" : "Points"); card.appendChild(choice); }
         const approve = document.createElement("button"); approve.textContent = "Approve"; approve.onclick = () => approveTask(task.id);
-        const reject = document.createElement("button"); reject.className = "danger"; reject.textContent = "Needs More Work"; reject.onclick = () => rejectTask(task.id);
+        const reject = document.createElement("button"); reject.className = "secondary"; reject.textContent = "Needs More Work"; reject.onclick = () => rejectTask(task.id);
         card.append(approve, reject); container.appendChild(card);
     });
 }
-function compressPhoto(file) {
+function renderChildTasks() {
+    const childName = getCurrentChildName(); const container = document.getElementById("childTaskList"); container.replaceChildren();
+    const tasks = getTasks().filter(task => task.assignee === childName); const finished = tasks.filter(task => task.status === "Completed").length;
+    document.getElementById("childTaskSummary").textContent = finished + " of " + tasks.length + " tasks completed.";
+    if (!tasks.length) { container.textContent = "You don't have any tasks assigned yet."; return; }
+    tasks.forEach(task => {
+        const card = document.createElement("div"); card.className = "task-card";
+        const title = document.createElement("h3"); title.textContent = task.name; card.appendChild(title);
+        if (task.rewardMode && task.rewardMode !== "none") {
+            const reward = document.createElement("p"); reward.className = "muted";
+            reward.textContent = task.rewardMode === "choice" ? "Choose when submitting: " + money(task.moneyAmount) + " or " + (task.pointsAmount || 0) + " points" : task.rewardMode === "money" ? "Reward: " + money(task.moneyAmount) : "Reward: " + (task.pointsAmount || 0) + " points";
+            card.appendChild(reward);
+        }
+        const due = document.createElement("p"); due.className = "muted"; due.textContent = task.dueDate ? "Due: " + task.dueDate : "No due date"; card.appendChild(due);
+        const status = document.createElement("span"); status.className = "task-status " + (task.status === "Pending Approval" ? "pending" : task.status === "Completed" ? "completed" : task.status === "Needs More Work" ? "rejected" : ""); status.textContent = task.status; card.appendChild(status);
+        if (task.status === "Assigned" || task.status === "Needs More Work") {
+            if (task.rewardMode === "choice") {
+                const choiceLabel = document.createElement("label"); choiceLabel.textContent = "Choose your reward: ";
+                const choice = document.createElement("select"); choice.id = "rewardChoice-" + task.id;
+                const moneyOption = document.createElement("option"); moneyOption.value = "money"; moneyOption.textContent = "Allowance (" + money(task.moneyAmount) + ")";
+                const pointsOption = document.createElement("option"); pointsOption.value = "points"; pointsOption.textContent = (task.pointsAmount || 0) + " points";
+                choice.append(moneyOption, pointsOption); card.append(choiceLabel, choice);
+            }
+            const submit = document.createElement("button"); submit.textContent = "Submit for Approval"; submit.onclick = () => submitTask(task.id); card.appendChild(submit);
+            const photoInput = document.createElement("input"); photoInput.type = "file"; photoInput.accept = "image/*"; photoInput.setAttribute("capture", "environment"); photoInput.setAttribute("aria-label", "Choose a photo for " + task.name); photoInput.id = "photo-" + task.id; card.appendChild(photoInput);
+        }
+        if (task.photo) { const photo = document.createElement("img"); photo.src = task.photo; photo.className = "submission-photo"; photo.alt = "Submitted task photo"; card.appendChild(photo); }
+        container.appendChild(card);
+    });
+}
+function submitTask(taskId) {
+    const tasks = getTasks(); const task = tasks.find(item => item.id === taskId); if (!task) return;
+    let selectedReward = task.rewardMode;
+    if (task.rewardMode === "choice") {
+        const choice = document.getElementById("rewardChoice-" + task.id);
+        selectedReward = choice ? choice.value : "money";
+    }
+    const fileInput = document.getElementById("photo-" + task.id);
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+    const saveSubmission = photo => {
+        task.photo = photo || "";
+        task.selectedReward = selectedReward;
+        task.status = "Pending Approval";
+        saveTasks(tasks); renderChildTasks();
+        alert("Your task was submitted for parent approval!");
+    };
+    if (!file) { saveSubmission(""); return; }
+    compressImage(file).then(saveSubmission).catch(error => { alert(error.message || "Could not upload that photo."); });
+}
+function compressImage(file) {
     return new Promise((resolve, reject) => {
-        if (!file || !file.type.startsWith("image/")) { reject(new Error("Please choose an image file.")); return; }
+        if (!file.type.startsWith("image/")) { reject(new Error("Please choose an image file.")); return; }
         const reader = new FileReader();
         reader.onload = () => {
             const image = new Image();
             image.onload = () => {
-                const maxSize = 900; let width = image.width; let height = image.height;
-                if (width > height && width > maxSize) { height = Math.round(height * maxSize / width); width = maxSize; }
-                else if (height > maxSize) { width = Math.round(width * maxSize / height); height = maxSize; }
-                const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;
-                canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+                const maxSize = 900; const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+                const canvas = document.createElement("canvas"); canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale);
+                const context = canvas.getContext("2d"); context.drawImage(image, 0, 0, canvas.width, canvas.height);
                 resolve(canvas.toDataURL("image/jpeg", 0.65));
             };
             image.onerror = () => reject(new Error("Could not read that image.")); image.src = reader.result;
@@ -436,78 +523,44 @@ function compressPhoto(file) {
         reader.onerror = () => reject(new Error("Could not load that photo.")); reader.readAsDataURL(file);
     });
 }
-function renderChildTasks() {
-    const childName = localStorage.getItem("homeBaseCurrentChild"); const container = document.getElementById("childTaskList"); container.replaceChildren();
-    const tasks = getTasks().filter(task => task.assignee === childName); const finished = tasks.filter(task => task.status === "Completed").length;
-    document.getElementById("childTaskSummary").textContent = finished + " of " + tasks.length + " tasks completed.";
-    if (!tasks.length) { container.textContent = "You don't have any tasks assigned yet."; return; }
-    tasks.forEach(task => {
-        const card = document.createElement("div"); card.className = "task-card";
-        const title = document.createElement("h3"); title.textContent = task.name; card.appendChild(title);
-        if (task.dueDate) { const due = document.createElement("p"); due.className = "muted"; due.textContent = "Due: " + task.dueDate; card.appendChild(due); }
-        const status = document.createElement("span"); status.className = "task-status"; status.textContent = task.status;
-        if (task.status === "Pending Approval") status.classList.add("pending");
-        if (task.status === "Completed") status.classList.add("completed");
-        if (task.status === "Needs More Work") status.classList.add("rejected");
-        card.appendChild(status);
-        if (task.status === "Assigned" || task.status === "Needs More Work") {
-            const label = document.createElement("p"); label.className = "photo-label"; label.textContent = "📷 Add a photo (optional)";
-            const input = document.createElement("input"); input.type = "file"; input.accept = "image/*"; input.setAttribute("capture", "environment"); input.setAttribute("aria-label", "Take or choose a photo for " + task.name);
-            const preview = document.createElement("img"); preview.className = "submission-photo"; preview.alt = "Selected chore photo preview"; preview.style.display = "none";
-            let selectedPhoto = null;
-            input.addEventListener("change", async () => {
-                const file = input.files[0]; if (!file) { selectedPhoto = null; preview.style.display = "none"; return; }
-                try { preview.style.display = "none"; selectedPhoto = await compressPhoto(file); preview.src = selectedPhoto; preview.style.display = "block"; }
-                catch (error) { selectedPhoto = null; input.value = ""; alert(error.message); }
-            });
-            const submit = document.createElement("button"); submit.textContent = "Submit for Approval"; submit.onclick = () => submitTask(task.id, selectedPhoto, submit);
-            card.append(label, input, preview, submit);
-        }
-        if (task.status === "Pending Approval" && task.submissionPhoto) {
-            const label = document.createElement("p"); label.className = "photo-label"; label.textContent = "Your submitted photo:";
-            const photo = document.createElement("img"); photo.className = "submission-photo"; photo.src = task.submissionPhoto; photo.alt = "Your submitted chore photo";
-            card.append(label, photo);
-        }
-        container.appendChild(card);
-    });
-}
-function submitTask(id, photo, button) {
-    const tasks = getTasks(); const task = tasks.find(item => item.id === id); if (!task) return;
-    if (button) { button.disabled = true; button.textContent = "Submitting..."; }
-    try {
-        task.status = "Pending Approval"; task.submissionPhoto = photo || null; task.submittedAt = new Date().toISOString();
-        saveTasks(tasks); renderChildTasks(); renderTaskManager(); renderFamilyDashboardTasks();
-    } catch (error) {
-        if (button) { button.disabled = false; button.textContent = "Submit for Approval"; }
-        alert("The submission couldn't be saved. The browser may be out of storage space. Try a smaller photo.");
+function approveTask(taskId) {
+    const tasks = getTasks(); const task = tasks.find(item => item.id === taskId); if (!task || task.status !== "Pending Approval") return;
+    task.status = "Completed";
+    if (task.rewardMode === "money" || (task.rewardMode === "choice" && task.selectedReward === "money")) {
+        const balances = getBalances(); if (!balances[task.assignee]) balances[task.assignee] = {money:0,points:0};
+        balances[task.assignee].money = Number((balances[task.assignee].money + Number(task.moneyAmount || 0)).toFixed(2)); saveBalances(balances);
+        addRewardHistory({child:task.assignee,task:task.name,kind:"money",amount:Number(task.moneyAmount || 0),date:new Date().toISOString()});
+    } else if (task.rewardMode === "points" || (task.rewardMode === "choice" && task.selectedReward === "points")) {
+        const balances = getBalances(); if (!balances[task.assignee]) balances[task.assignee] = {money:0,points:0};
+        balances[task.assignee].points = Number(balances[task.assignee].points || 0) + Number(task.pointsAmount || 0); saveBalances(balances);
+        addRewardHistory({child:task.assignee,task:task.name,kind:"points",amount:Number(task.pointsAmount || 0),date:new Date().toISOString()});
     }
+    saveTasks(tasks); renderTaskManager(); renderFamilyDashboardTasks(); renderNewFeatureViews();
 }
-function approveTask(id) {
-    const tasks = getTasks(); const task = tasks.find(item => item.id === id); if (!task) return;
-    task.status = "Completed"; task.approvedAt = new Date().toISOString(); saveTasks(tasks);
-    renderTaskManager(); renderChildTasks(); renderFamilyDashboardTasks();
+function rejectTask(taskId) {
+    const tasks = getTasks(); const task = tasks.find(item => item.id === taskId); if (!task) return;
+    task.status = "Needs More Work"; task.photo = ""; task.selectedReward = "";
+    saveTasks(tasks); renderTaskManager(); renderFamilyDashboardTasks();
 }
-function rejectTask(id) {
-    const tasks = getTasks(); const task = tasks.find(item => item.id === id); if (!task) return;
-    task.status = "Needs More Work"; saveTasks(tasks); renderTaskManager(); renderChildTasks(); renderFamilyDashboardTasks();
-}
-function deleteTask(id) {
-    if (!confirm("Are you sure you want to delete this task?")) return;
-    saveTasks(getTasks().filter(task => task.id !== id)); renderTaskManager(); renderChildTasks(); renderFamilyDashboardTasks();
+function deleteTask(taskId) {
+    if (!confirm("Delete this task?")) return;
+    saveTasks(getTasks().filter(task => task.id !== taskId)); renderTaskManager(); renderFamilyDashboardTasks();
 }
 function renderFamilyDashboardTasks() {
     const container = document.getElementById("familyDashboardTasks"); if (!container) return;
-    const tasks = getTasks(); container.replaceChildren();
-    if (!tasks.length) container.textContent = "No family tasks have been added yet.";
-    else tasks.forEach(task => {
-        const item = document.createElement("div"); item.className = "task-item";
-        const text = document.createElement("div"); const title = document.createElement("strong"); title.textContent = task.name;
-        const who = document.createElement("p"); who.className = "muted"; who.textContent = task.assignee + " · " + task.status;
-        text.append(title, who); item.appendChild(text); container.appendChild(item);
-    });
+    container.replaceChildren();
+    const tasks = getTasks();
     const completed = tasks.filter(task => task.status === "Completed").length;
     document.getElementById("familyTaskProgress").textContent = completed + "/" + tasks.length;
     document.getElementById("familyTaskMessage").textContent = tasks.length && completed === tasks.length ? "All tasks completed! Great job!" : completed ? "You're making progress!" : "Let's get today started!";
+    if (!tasks.length) { container.textContent = "No family tasks yet."; return; }
+    tasks.forEach(task => {
+        const item = document.createElement("div"); item.className = "task-item";
+        const details = document.createElement("div");
+        const name = document.createElement("strong"); name.textContent = task.name;
+        const assigned = document.createElement("p"); assigned.className = "muted"; assigned.textContent = "Assigned to " + task.assignee + " · " + task.status;
+        details.append(name, assigned); item.appendChild(details); container.appendChild(item);
+    });
 }
 
 /* FAMILY CALENDAR */
@@ -516,8 +569,8 @@ function getEvents() {
 }
 function saveEvents(events) { localStorage.setItem("homeBaseEvents", JSON.stringify(events)); }
 function getEventCreator() {
-    const role = localStorage.getItem("homeBaseCurrentRole") || "Dashboard";
-    if (role === "Child") return { name: localStorage.getItem("homeBaseCurrentChild") || "Child", role: "Child" };
+    const role = sessionStorage.getItem("homeBaseCurrentRole") || localStorage.getItem("homeBaseCurrentRole") || "Dashboard";
+    if (role === "Child") return { name: getCurrentChildName(), role: "Child" };
     if (role === "Parent") return { name: localStorage.getItem("homeBaseParentName") || "Parent", role: "Parent" };
     return { name: "Family Dashboard", role: "Dashboard" };
 }
@@ -528,59 +581,45 @@ function buildEventForm(containerId, mode) {
     const heading = document.createElement("h3"); heading.textContent = "＋ Add a Family Event";
     const form = document.createElement("div"); form.className = "task-card";
     const nameLabel = document.createElement("label"); nameLabel.textContent = "Event Name";
-    const name = document.createElement("input"); name.type = "text"; name.placeholder = "Example: Soccer practice"; name.style.width = "100%"; name.id = mode + "EventName";
-    const fields = document.createElement("div"); fields.className = "form-grid";
-    const dateWrap = document.createElement("div"); dateWrap.className = "form-field";
+    const nameInput = document.createElement("input"); nameInput.placeholder = "Example: Soccer practice"; nameInput.style.width = "100%";
     const dateLabel = document.createElement("label"); dateLabel.textContent = "Date";
-    const date = document.createElement("input"); date.type = "date"; date.id = mode + "EventDate";
-    dateWrap.append(dateLabel, date);
-    const timeWrap = document.createElement("div"); timeWrap.className = "form-field";
+    const dateInput = document.createElement("input"); dateInput.type = "date";
     const timeLabel = document.createElement("label"); timeLabel.textContent = "Time (optional)";
-    const time = document.createElement("input"); time.type = "time"; time.id = mode + "EventTime";
-    timeWrap.append(timeLabel, time); fields.append(dateWrap, timeWrap);
-    const locationLabel = document.createElement("label"); locationLabel.textContent = "Location (optional)";
-    const location = document.createElement("input"); location.type = "text"; location.placeholder = "Where is it?"; location.style.width = "100%"; location.id = mode + "EventLocation";
-    const notesLabel = document.createElement("label"); notesLabel.textContent = "Notes (optional)";
-    const notes = document.createElement("textarea"); notes.placeholder = "Add any helpful details..."; notes.id = mode + "EventNotes";
-    const audienceLabel = document.createElement("label"); audienceLabel.textContent = "Who is this event for?";
-    const audience = document.createElement("select"); audience.id = mode + "EventAudience"; audience.style.width = "100%";
-    const everyone = document.createElement("option"); everyone.value = "Everyone"; everyone.textContent = "Everyone";
-    audience.appendChild(everyone);
-    getFamilyMembers().forEach(member => {
-        const option = document.createElement("option"); option.value = member.name; option.textContent = member.name; audience.appendChild(option);
-    });
-    const save = document.createElement("button"); save.textContent = "Add Event"; save.onclick = () => createEvent(mode);
-    const message = document.createElement("p"); message.className = "status-message"; message.id = mode + "EventMessage";
-    form.append(nameLabel, name, fields, locationLabel, location, notesLabel, notes, audienceLabel, audience, save, message);
+    const timeInput = document.createElement("input"); timeInput.type = "time";
+    const audienceLabel = document.createElement("label"); audienceLabel.textContent = "Who can see this?";
+    const audience = document.createElement("select");
+    [["Everyone","Everyone"], ...getFamilyMembers().filter(x => x.role === "Child").map(x => [x.name,x.name])].forEach(([value,label]) => { const option = document.createElement("option"); option.value = value; option.textContent = label; audience.appendChild(option); });
+    const add = document.createElement("button"); add.textContent = "Add Event";
+    add.onclick = () => {
+        const eventName = nameInput.value.trim();
+        if (!eventName || !dateInput.value) { alert("Enter an event name and date."); return; }
+        const events = getEvents(); const creator = getEventCreator();
+        events.push({id:Date.now().toString(),name:eventName,date:dateInput.value,time:timeInput.value,audience:audience.value,createdBy:creator.name,createdByRole:creator.role});
+        saveEvents(events); nameInput.value = ""; renderCalendarViews();
+    };
+    form.append(nameLabel, nameInput, dateLabel, dateInput, timeLabel, timeInput, audienceLabel, audience, add);
     container.append(heading, form);
 }
-function createEvent(mode) {
-    const name = document.getElementById(mode + "EventName").value.trim();
-    const date = document.getElementById(mode + "EventDate").value;
-    const time = document.getElementById(mode + "EventTime").value;
-    const location = document.getElementById(mode + "EventLocation").value.trim();
-    const notes = document.getElementById(mode + "EventNotes").value.trim();
-    const audience = document.getElementById(mode + "EventAudience").value;
-    if (!name || !date) { alert("Please enter an event name and date."); return; }
-    const creator = getEventCreator();
-    const events = getEvents();
-    events.push({
-        id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
-        name, date, time, location, notes, audience,
-        createdBy: creator.name, createdByRole: creator.role,
-        createdAt: new Date().toISOString()
+function appendEventGroup(container, title, events, mode) {
+    if (!events.length) return;
+    const heading = document.createElement("h3"); heading.textContent = title; container.appendChild(heading);
+    events.forEach(event => {
+        const item = document.createElement("div"); item.className = "event-item";
+        const name = document.createElement("strong"); name.textContent = event.name;
+        const date = document.createElement("p"); date.textContent = formatEventDate(event.date) + (event.time ? " · " + event.time : "");
+        const meta = document.createElement("p"); meta.className = "event-meta"; meta.textContent = "For: " + (event.audience || "Everyone") + " · Added by " + (event.createdBy || "Family");
+        item.append(name, date, meta);
+        const current = getEventCreator();
+        if (current.role === "Parent" || event.createdBy === current.name) {
+            const actions = document.createElement("div"); actions.className = "event-actions";
+            const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "Edit";
+            edit.onclick = () => editEvent(event.id);
+            const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete";
+            remove.onclick = () => deleteEvent(event.id);
+            actions.append(edit, remove); item.appendChild(actions);
+        }
+        container.appendChild(item);
     });
-    try {
-        saveEvents(events);
-        document.getElementById(mode + "EventName").value = "";
-        document.getElementById(mode + "EventDate").value = "";
-        document.getElementById(mode + "EventTime").value = "";
-        document.getElementById(mode + "EventLocation").value = "";
-        document.getElementById(mode + "EventNotes").value = "";
-        document.getElementById(mode + "EventAudience").value = "Everyone";
-        document.getElementById(mode + "EventMessage").textContent = "Event added to the family calendar!";
-        renderCalendarViews();
-    } catch (error) { alert("The event could not be saved. Your browser may be out of storage space."); }
 }
 function formatEventDate(dateString) {
     const parts = dateString.split("-").map(Number);
@@ -591,8 +630,8 @@ function renderEventList(containerId, mode) {
     container.replaceChildren();
     const today = new Date(); today.setHours(0,0,0,0);
     const todayString = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
-    const currentRole = localStorage.getItem("homeBaseCurrentRole") || "Dashboard";
-    const currentChild = localStorage.getItem("homeBaseCurrentChild");
+    const currentRole = sessionStorage.getItem("homeBaseCurrentRole") || localStorage.getItem("homeBaseCurrentRole") || "Dashboard";
+    const currentChild = getCurrentChildName();
     let events = getEvents().filter(event => {
         const visibleTo = event.audience || "Everyone";
         return visibleTo === "Everyone" || visibleTo === currentChild || currentRole !== "Child";
@@ -603,75 +642,27 @@ function renderEventList(containerId, mode) {
     const past = events.filter(event => event.date < todayString);
     appendEventGroup(container, "Today's Events", todayEvents, mode);
     appendEventGroup(container, "Upcoming Events", upcoming, mode);
-    if (mode !== "dashboard" && past.length) appendEventGroup(container, "Past Events", past.slice(-5).reverse(), mode);
-    if (!todayEvents.length && !upcoming.length) {
-        const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No events scheduled for today or upcoming. Add one above!";
-        container.appendChild(empty);
-    }
-}
-function appendEventGroup(container, headingText, events, mode) {
-    const heading = document.createElement("h3"); heading.textContent = headingText; container.appendChild(heading);
-    if (!events.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = headingText === "Today's Events" ? "Nothing scheduled today." : "No events here yet."; container.appendChild(empty); return; }
-    events.forEach(event => {
-        const card = document.createElement("div"); card.className = "event-item";
-        const title = document.createElement("strong"); title.textContent = event.name;
-        const date = document.createElement("p"); date.textContent = formatEventDate(event.date) + (event.time ? " · " + formatTime(event.time) : "");
-        const audience = document.createElement("p"); audience.className = "event-meta"; audience.textContent = "For: " + (event.audience || "Everyone") + " · Added by " + (event.createdBy || "Family member");
-        card.append(title, date, audience);
-        if (event.location) { const loc = document.createElement("p"); loc.textContent = "📍 " + event.location; card.appendChild(loc); }
-        if (event.notes) { const note = document.createElement("p"); note.textContent = event.notes; card.appendChild(note); }
-        const canManage = currentUserCanManageEvent(event);
-        if (canManage && mode !== "dashboard") {
-            const actions = document.createElement("div"); actions.className = "event-actions";
-            const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "Edit"; edit.onclick = () => editEvent(event.id, mode);
-            const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete"; remove.onclick = () => deleteEvent(event.id);
-            actions.append(edit, remove); card.appendChild(actions);
-        }
-        container.appendChild(card);
-    });
-}
-function formatTime(time) {
-    const [hour, minute] = time.split(":").map(Number);
-    const date = new Date(); date.setHours(hour, minute, 0, 0);
-    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
-function currentUserCanManageEvent(event) {
-    const user = getEventCreator();
-    if (user.role === "Parent") return true;
-    return event.createdBy === user.name;
-}
-function deleteEvent(id) {
-    if (!confirm("Delete this family event?")) return;
-    const user = getEventCreator(); const events = getEvents(); const event = events.find(item => item.id === id);
-    if (!event || (user.role !== "Parent" && event.createdBy !== user.name)) { alert("You can only delete events you created."); return; }
-    saveEvents(events.filter(item => item.id !== id)); renderCalendarViews();
-}
-function editEvent(id, mode) {
-    const events = getEvents(); const event = events.find(item => item.id === id); if (!event) return;
-    const user = getEventCreator();
-    if (user.role !== "Parent" && event.createdBy !== user.name) { alert("You can only edit events you created."); return; }
-    const newName = prompt("Event name:", event.name); if (newName === null) return;
-    if (!newName.trim()) { alert("Event name cannot be blank."); return; }
-    const newDate = prompt("Date (YYYY-MM-DD):", event.date); if (newDate === null) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate) || Number.isNaN(new Date(newDate + "T00:00:00").getTime())) { alert("Please use a valid date in YYYY-MM-DD format."); return; }
-    const newTime = prompt("Time (HH:MM), or leave blank:", event.time || ""); if (newTime === null) return;
-    if (newTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(newTime)) { alert("Please enter a valid time such as 15:30."); return; }
-    const newLocation = prompt("Location (optional):", event.location || ""); if (newLocation === null) return;
-    const newNotes = prompt("Notes (optional):", event.notes || ""); if (newNotes === null) return;
-    const newAudience = prompt("Who is it for? Enter Everyone or a family member's exact name:", event.audience || "Everyone"); if (newAudience === null) return;
-    const validAudience = newAudience.trim() === "Everyone" || getFamilyMembers().some(member => member.name.toLowerCase() === newAudience.trim().toLowerCase());
-    if (!validAudience) { alert("Please enter Everyone or the exact name of a family member."); return; }
-    event.name = newName.trim(); event.date = newDate; event.time = newTime; event.location = newLocation.trim(); event.notes = newNotes.trim();
-    event.audience = newAudience.trim() === "Everyone" ? "Everyone" : getFamilyMembers().find(member => member.name.toLowerCase() === newAudience.trim().toLowerCase()).name;
-    event.updatedAt = new Date().toISOString(); saveEvents(events); renderCalendarViews();
+    appendEventGroup(container, "Past Events", past, mode);
+    if (!events.length) container.textContent = "No family events yet.";
 }
 function renderCalendarViews() {
     buildEventForm("parentEventForm", "parent");
     buildEventForm("childEventForm", "child");
-    buildEventForm("dashboardEventForm", "dashboard");
     renderEventList("parentEventList", "parent");
     renderEventList("childEventList", "child");
     renderEventList("dashboardEventList", "dashboard");
+}
+function editEvent(id) {
+    const events = getEvents(); const event = events.find(item => item.id === id); if (!event) return;
+    const newName = prompt("Event name:", event.name); if (newName === null || !newName.trim()) return;
+    const newDate = prompt("Date (YYYY-MM-DD):", event.date); if (newDate === null || !newDate.trim()) return;
+    const newTime = prompt("Time (HH:MM, optional):", event.time || ""); if (newTime === null) return;
+    event.name = newName.trim(); event.date = newDate.trim(); event.time = newTime.trim();
+    saveEvents(events); renderCalendarViews();
+}
+function deleteEvent(id) {
+    if (!confirm("Delete this event?")) return;
+    saveEvents(getEvents().filter(event => event.id !== id)); renderCalendarViews();
 }
 
 /* FAMILY REMINDERS */
@@ -691,7 +682,7 @@ function getReminderUser() {
 
     if (document.getElementById("childDashboard").style.display !== "none") {
         return {
-            name: localStorage.getItem("homeBaseCurrentChild") || "Child",
+            name: getCurrentChildName(),
             role: "Child"
         };
     }
@@ -702,127 +693,52 @@ function buildReminderForm() {
     const container = document.getElementById("parentReminderForm");
     if (!container) return;
     container.replaceChildren();
-    const form = document.createElement("div"); form.className = "task-card";
-    const titleLabel = document.createElement("label"); titleLabel.textContent = "Reminder";
-    const title = document.createElement("input"); title.id = "newReminderTitle"; title.placeholder = "Example: Bring your library books"; title.style.width = "100%";
-    const fields = document.createElement("div"); fields.className = "form-grid";
-    const dateWrap = document.createElement("div"); dateWrap.className = "form-field";
-    const dateLabel = document.createElement("label"); dateLabel.textContent = "Date (optional)";
-    const date = document.createElement("input"); date.type = "date"; date.id = "newReminderDate";
-    dateWrap.append(dateLabel, date);
-    const timeWrap = document.createElement("div"); timeWrap.className = "form-field";
-    const timeLabel = document.createElement("label"); timeLabel.textContent = "Time (optional)";
-    const time = document.createElement("input"); time.type = "time"; time.id = "newReminderTime";
-    timeWrap.append(timeLabel, time); fields.append(dateWrap, timeWrap);
-    const notesLabel = document.createElement("label"); notesLabel.textContent = "Details (optional)";
-    const notes = document.createElement("textarea"); notes.id = "newReminderNotes"; notes.placeholder = "Add any helpful details...";
-    const add = document.createElement("button"); add.textContent = "+ Add Reminder"; add.onclick = createReminder;
-    const message = document.createElement("p"); message.id = "reminderCreateMessage"; message.className = "status-message";
-    form.append(titleLabel, title, fields, notesLabel, notes, add, message);
-    container.appendChild(form);
+    const title = document.createElement("h3"); title.textContent = "＋ Create a Reminder";
+    const input = document.createElement("input"); input.placeholder = "Reminder details"; input.style.width = "100%";
+    const date = document.createElement("input"); date.type = "date";
+    const audience = document.createElement("select");
+    [["Everyone","Everyone"], ...getFamilyMembers().filter(x => x.role === "Child").map(x => [x.name,x.name])].forEach(([value,label]) => { const option = document.createElement("option"); option.value = value; option.textContent = label; audience.appendChild(option); });
+    const add = document.createElement("button"); add.textContent = "Post Reminder";
+    add.onclick = () => {
+        if (!input.value.trim()) { alert("Enter a reminder."); return; }
+        const reminders = getReminders(); const creator = getReminderUser();
+        reminders.push({id:Date.now().toString(),text:input.value.trim(),date:date.value,audience:audience.value,createdBy:creator.name,acknowledged:[]});
+        saveReminders(reminders); input.value = ""; renderReminderViews();
+    };
+    container.append(title, input, date, audience, add);
 }
-function createReminder() {
-    const title = document.getElementById("newReminderTitle").value.trim();
-    const date = document.getElementById("newReminderDate").value;
-    const time = document.getElementById("newReminderTime").value;
-    const notes = document.getElementById("newReminderNotes").value.trim();
-    if (!title) { alert("Please enter a reminder."); return; }
-    const user = getReminderUser();
-    if (user.role !== "Parent") { alert("Only a parent account can create family reminders."); return; }
-    const reminders = getReminders();
-    reminders.push({
-        id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
-        title, date, time, notes, createdBy: user.name,
-        createdAt: new Date().toISOString(), acknowledgedBy: []
-    });
-    try {
-        saveReminders(reminders);
-        document.getElementById("newReminderTitle").value = "";
-        document.getElementById("newReminderDate").value = "";
-        document.getElementById("newReminderTime").value = "";
-        document.getElementById("newReminderNotes").value = "";
-        renderReminderViews();
-        document.getElementById("reminderCreateMessage").textContent = "Reminder added for your family!";
-    } catch (error) { alert("The reminder could not be saved. Your browser may be out of storage space."); }
-}
-function formatReminderWhen(reminder) {
-    const parts = [];
-    if (reminder.date) parts.push(formatEventDate(reminder.date));
-    if (reminder.time) parts.push(formatTime(reminder.time));
-    return parts.length ? parts.join(" · ") : "Anytime";
-}
-function renderReminderList(containerId, view) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+function renderReminderList(containerId, mode) {
+    const container = document.getElementById(containerId); if (!container) return;
     container.replaceChildren();
-    const reminders = getReminders().sort((a, b) => {
-        const aKey = (a.date || "9999-12-31") + (a.time || "00:00");
-        const bKey = (b.date || "9999-12-31") + (b.time || "00:00");
-        return aKey.localeCompare(bKey);
-    });
-    if (!reminders.length) {
-        const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = view === "parent" ? "No reminders yet. Add one above!" : "No family reminders right now.";
-        container.appendChild(empty); return;
-    }
-    const user = getReminderUser();
+    const current = getReminderUser();
+    const reminders = getReminders().filter(item => item.audience === "Everyone" || item.audience === current.name || current.role !== "Child");
+    if (!reminders.length) { container.textContent = "No reminders right now."; return; }
     reminders.forEach(reminder => {
-        if (!Array.isArray(reminder.acknowledgedBy)) reminder.acknowledgedBy = [];
-        const acknowledged = user.role === "Child" && reminder.acknowledgedBy.includes(user.name);
-        const card = document.createElement("div"); card.className = "reminder-item" + (acknowledged ? " reminder-done" : "");
-        const heading = document.createElement("strong"); heading.textContent = reminder.title;
-        const when = document.createElement("p"); when.className = "event-meta"; when.textContent = formatReminderWhen(reminder);
-        card.append(heading, when);
-        if (reminder.notes) { const note = document.createElement("p"); note.textContent = reminder.notes; card.appendChild(note); }
-        if (view === "parent") {
-            const status = document.createElement("p"); status.className = "reminder-status";
-            const names = reminder.acknowledgedBy.length ? reminder.acknowledgedBy.join(", ") : "Nobody yet";
-            status.textContent = "Acknowledged by: " + names;
-            card.appendChild(status);
-            const actions = document.createElement("div"); actions.className = "event-actions";
-            const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "Edit"; edit.onclick = () => editReminder(reminder.id);
-            const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete"; remove.onclick = () => deleteReminder(reminder.id);
-            actions.append(edit, remove); card.appendChild(actions);
-        } else if (view === "child") {
-            const status = document.createElement("p"); status.className = "reminder-status"; status.textContent = acknowledged ? "✓ You've acknowledged this reminder" : "Please acknowledge when you've read this.";
-            card.appendChild(status);
-            if (!acknowledged) {
-                const button = document.createElement("button"); button.textContent = "I've Seen This"; button.onclick = () => acknowledgeReminder(reminder.id);
-                card.appendChild(button);
-            }
-        } else {
-            const status = document.createElement("p"); status.className = "reminder-status";
-            status.textContent = reminder.acknowledgedBy.length + " family member(s) acknowledged";
-            card.appendChild(status);
+        const item = document.createElement("div"); item.className = "reminder-item";
+        const title = document.createElement("strong"); title.textContent = reminder.text;
+        const meta = document.createElement("p"); meta.className = "reminder-status"; meta.textContent = (reminder.date ? "Date: " + reminder.date + " · " : "") + "Posted by " + reminder.createdBy;
+        item.append(title, meta);
+        const acknowledged = (reminder.acknowledged || []).includes(current.name);
+        if (current.role === "Child" && !acknowledged) {
+            const button = document.createElement("button"); button.textContent = "Got it"; button.onclick = () => acknowledgeReminder(reminder.id); item.appendChild(button);
+        } else if (acknowledged) {
+            const done = document.createElement("p"); done.className = "reminder-status"; done.textContent = "✓ Acknowledged"; item.appendChild(done);
         }
-        container.appendChild(card);
+        if (current.role === "Parent") {
+            const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete"; remove.onclick = () => deleteReminder(reminder.id); item.appendChild(remove);
+        }
+        container.appendChild(item);
     });
 }
 function acknowledgeReminder(id) {
-    const user = getReminderUser();
-    if (user.role !== "Child") { alert("Open a child account to acknowledge a reminder."); return; }
-    const reminders = getReminders();
-    const reminder = reminders.find(item => item.id === id);
-    if (!reminder) return;
-    if (!Array.isArray(reminder.acknowledgedBy)) reminder.acknowledgedBy = [];
-    if (!reminder.acknowledgedBy.includes(user.name)) reminder.acknowledgedBy.push(user.name);
+    const reminders = getReminders(); const reminder = reminders.find(item => item.id === id); if (!reminder) return;
+    if (!reminder.acknowledged) reminder.acknowledged = [];
+    const name = getReminderUser().name;
+    if (!reminder.acknowledged.includes(name)) reminder.acknowledged.push(name);
     saveReminders(reminders); renderReminderViews();
 }
-function editReminder(id) {
-    const reminders = getReminders(); const reminder = reminders.find(item => item.id === id);
-    if (!reminder) return;
-    const title = prompt("Reminder:", reminder.title); if (title === null) return;
-    if (!title.trim()) { alert("Reminder cannot be blank."); return; }
-    const date = prompt("Date (YYYY-MM-DD), or leave blank:", reminder.date || ""); if (date === null) return;
-    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(new Date(date + "T00:00:00").getTime()))) { alert("Please enter a valid date in YYYY-MM-DD format."); return; }
-    const time = prompt("Time (HH:MM), or leave blank:", reminder.time || ""); if (time === null) return;
-    if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) { alert("Please enter a valid time such as 15:30."); return; }
-    const notes = prompt("Details (optional):", reminder.notes || ""); if (notes === null) return;
-    reminder.title = title.trim(); reminder.date = date; reminder.time = time; reminder.notes = notes.trim();
-    reminder.updatedAt = new Date().toISOString(); saveReminders(reminders); renderReminderViews();
-}
 function deleteReminder(id) {
-    if (!confirm("Delete this family reminder?")) return;
+    if (!confirm("Delete this reminder?")) return;
     saveReminders(getReminders().filter(item => item.id !== id)); renderReminderViews();
 }
 function renderReminderViews() {
@@ -831,6 +747,106 @@ function renderReminderViews() {
     renderReminderList("childReminderList", "child");
     renderReminderList("dashboardReminderList", "dashboard");
 }
+/* HOMEBASE EXPANSION: SHOPPING, REWARDS, ACHIEVEMENTS, POLLS */
+function readStore(key, fallback) { try { const value = JSON.parse(localStorage.getItem(key)); return value === null ? fallback : value; } catch { return fallback; } }
+function writeStore(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+function getBalances() { return readStore("homeBaseBalances", {}); }
+function saveBalances(value) { writeStore("homeBaseBalances", value); }
+function getRewardHistory() { return readStore("homeBaseRewardHistory", []); }
+function addRewardHistory(item) { const history = getRewardHistory(); history.unshift(item); writeStore("homeBaseRewardHistory", history); }
+function getCurrentChildName() {
+    return sessionStorage.getItem("homeBaseCurrentChild") || localStorage.getItem("homeBaseCurrentChild") || "Child";
+}
+function money(value) { return "$" + Number(value || 0).toFixed(2); }
+function getShoppingItems() { return readStore("homeBaseShopping", []); }
+function saveShoppingItems(items) { writeStore("homeBaseShopping", items); }
+function renderShoppingList(containerId, canEdit) {
+    const container = document.getElementById(containerId); if (!container) return;
+    container.replaceChildren();
+    if (canEdit) {
+        const input = document.createElement("input"); input.placeholder = "Add an item (e.g. milk)"; input.id = containerId + "Input"; input.style.width = "65%";
+        const add = document.createElement("button"); add.textContent = "Add"; add.onclick = () => {
+            const name = input.value.trim(); if (!name) return;
+            const items = getShoppingItems(); items.push({ id: Date.now().toString() + Math.random().toString(36).slice(2,6), name, addedBy: getReminderUser().name, purchased: false, createdAt: new Date().toISOString() });
+            saveShoppingItems(items); renderNewFeatureViews();
+        };
+        container.append(input, add);
+    }
+    const items = getShoppingItems().sort((a,b) => Number(a.purchased) - Number(b.purchased));
+    if (!items.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "Your shopping list is empty."; container.appendChild(empty); return; }
+    items.forEach(item => {
+        const row = document.createElement("div"); row.className = "shopping-item" + (item.purchased ? " purchased" : "");
+        const label = document.createElement("span"); label.textContent = item.name + " · added by " + (item.addedBy || "Family");
+        row.appendChild(label);
+        if (canEdit) {
+            const actions = document.createElement("div");
+            const toggle = document.createElement("button"); toggle.className = "secondary"; toggle.textContent = item.purchased ? "Undo" : "Bought"; toggle.onclick = () => { const list = getShoppingItems(); const found = list.find(x => x.id === item.id); if (found) found.purchased = !found.purchased; saveShoppingItems(list); renderNewFeatureViews(); };
+            const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "×"; remove.onclick = () => { saveShoppingItems(getShoppingItems().filter(x => x.id !== item.id)); renderNewFeatureViews(); };
+            actions.append(toggle, remove); row.appendChild(actions);
+        } else { const state = document.createElement("span"); state.className = "muted"; state.textContent = item.purchased ? "Purchased" : "Needed"; row.appendChild(state); }
+        container.appendChild(row);
+    });
+}
+function getStoreItems() { return readStore("homeBaseStoreItems", []); }
+function getRedemptionRequests() { return readStore("homeBaseRedemptionRequests", []); }
+function renderStore(parentMode) {
+    const container = document.getElementById(parentMode ? "parentStoreView" : "childStoreView"); if (!container) return;
+    container.replaceChildren();
+    if (parentMode) {
+        const name = document.createElement("input"); name.id = "newStoreRewardName"; name.placeholder = "Reward name";
+        const cost = document.createElement("input"); cost.id = "newStoreRewardCost"; cost.type = "number"; cost.min = "1"; cost.step = "1"; cost.placeholder = "Points"; cost.style.width = "100px";
+        const add = document.createElement("button"); add.textContent = "Add Reward"; add.onclick = () => { const title = name.value.trim(), points = Math.floor(Number(cost.value)); if (!title || !Number.isFinite(points) || points < 1) { alert("Enter a reward name and a points cost of at least 1."); return; } const list = getStoreItems(); list.push({ id: Date.now().toString(), name: title, points }); writeStore("homeBaseStoreItems", list); renderNewFeatureViews(); };
+        container.append(name, cost, add);
+    }
+    const items = getStoreItems();
+    if (!items.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = parentMode ? "Add rewards children can save points for." : "Your parent hasn't added any rewards yet."; container.appendChild(empty); }
+    items.forEach(item => {
+        const card = document.createElement("div"); card.className = "store-item";
+        const title = document.createElement("strong"); title.textContent = item.name + " · " + item.points + " points"; card.appendChild(title);
+        if (parentMode) { const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Remove"; remove.onclick = () => { writeStore("homeBaseStoreItems", getStoreItems().filter(x => x.id !== item.id)); renderNewFeatureViews(); }; card.appendChild(remove); }
+        else { const balance = (getBalances()[getCurrentChildName()] || {points:0}).points || 0; const request = document.createElement("button"); request.textContent = "Request this reward"; request.disabled = balance < item.points || getRedemptionRequests().some(x => x.rewardId === item.id && x.child === getCurrentChildName() && x.status === "Pending"); request.onclick = () => { const requests = getRedemptionRequests(); requests.push({ id: Date.now().toString(), rewardId: item.id, rewardName: item.name, points: item.points, child: getCurrentChildName(), status: "Pending", requestedAt: new Date().toISOString() }); writeStore("homeBaseRedemptionRequests", requests); renderNewFeatureViews(); }; card.appendChild(request); }
+        container.appendChild(card);
+    });
+    if (parentMode) {
+        const heading = document.createElement("h4"); heading.textContent = "Redemption requests"; container.appendChild(heading);
+        const requests = getRedemptionRequests().filter(x => x.status === "Pending");
+        if (!requests.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No reward requests waiting."; container.appendChild(empty); }
+        requests.forEach(req => { const row = document.createElement("div"); row.className = "store-item"; row.textContent = req.child + " requested " + req.rewardName + " (" + req.points + " points). ";
+            const approve = document.createElement("button"); approve.textContent = "Approve"; approve.onclick = () => decideRedemption(req.id, true);
+            const deny = document.createElement("button"); deny.className = "secondary"; deny.textContent = "Decline"; deny.onclick = () => decideRedemption(req.id, false); row.append(approve, deny); container.appendChild(row); });
+    }
+}
+function decideRedemption(id, approved) {
+    const requests = getRedemptionRequests(); const req = requests.find(x => x.id === id && x.status === "Pending"); if (!req) return;
+    if (approved) { const balances = getBalances(); const balance = balances[req.child] || {money:0,points:0}; if (balance.points < req.points) { alert("That child no longer has enough points."); return; } balance.points -= req.points; balances[req.child] = balance; saveBalances(balances); }
+    req.status = approved ? "Approved" : "Declined"; req.decidedAt = new Date().toISOString(); writeStore("homeBaseRedemptionRequests", requests); renderNewFeatureViews();
+}
+function getCashoutRequests() { return readStore("homeBaseCashoutRequests", []); }
+function requestCashout() { const amount = Math.round(Number(document.getElementById("cashoutAmount").value) * 100) / 100; const child = getCurrentChildName(); const balance = getBalances()[child] || {money:0,points:0}; if (!Number.isFinite(amount) || amount <= 0 || amount > balance.money) { alert("Enter an amount up to your available allowance balance."); return; } if (getCashoutRequests().some(x => x.child === child && x.status === "Pending")) { alert("You already have a cash-out request waiting."); return; } const requests = getCashoutRequests(); requests.push({id:Date.now().toString(),child,amount,status:"Pending",requestedAt:new Date().toISOString()}); writeStore("homeBaseCashoutRequests",requests); renderNewFeatureViews(); }
+function decideCashout(id, paid) { const requests = getCashoutRequests(); const request = requests.find(x => x.id === id && x.status === "Pending"); if (!request) return; if (paid) { const balances = getBalances(); const balance = balances[request.child] || {money:0,points:0}; if (balance.money < request.amount) { alert("The child's balance is now lower than this request."); return; } balance.money = Math.round((balance.money - request.amount) * 100) / 100; balances[request.child] = balance; saveBalances(balances); addRewardHistory({child:request.child,task:"Cash-out paid",kind:"money",amount:-request.amount,date:new Date().toISOString()}); } request.status = paid ? "Paid" : "Declined"; request.decidedAt = new Date().toISOString(); writeStore("homeBaseCashoutRequests",requests); renderNewFeatureViews(); }
+function renderAllowanceViews() {
+    const parent = document.getElementById("parentAllowanceView"); if (parent) { parent.replaceChildren(); getFamilyMembers().filter(m => m.role === "Child").forEach(member => { const balance = getBalances()[member.name] || {money:0,points:0}; const line = document.createElement("p"); line.textContent = member.name + ": " + money(balance.money) + " allowance · " + (balance.points || 0) + " points"; parent.appendChild(line); }); if (!getFamilyMembers().some(m => m.role === "Child")) parent.textContent = "Child balances will appear here."; const cashTitle = document.createElement("h4"); cashTitle.textContent = "Cash-out requests"; parent.appendChild(cashTitle); const cashRequests = getCashoutRequests().filter(x => x.status === "Pending"); if (!cashRequests.length) { const noCash = document.createElement("p"); noCash.className = "muted"; noCash.textContent = "No cash-out requests."; parent.appendChild(noCash); } cashRequests.forEach(req => { const row = document.createElement("div"); row.className = "store-item"; row.textContent = req.child + " requested " + money(req.amount) + ". "; const paid = document.createElement("button"); paid.textContent = "Mark Paid"; paid.onclick = () => decideCashout(req.id, true); const decline = document.createElement("button"); decline.className = "secondary"; decline.textContent = "Decline"; decline.onclick = () => decideCashout(req.id, false); row.append(paid, decline); parent.appendChild(row); }); const historyTitle = document.createElement("h4"); historyTitle.textContent = "Recent reward history"; parent.appendChild(historyTitle); const history = getRewardHistory().slice(0,8); if (!history.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No rewards earned yet."; parent.appendChild(empty); } history.forEach(entry => { const line = document.createElement("p"); line.className = "muted"; line.textContent = entry.task === "Cash-out paid" ? entry.child + " cashed out " + money(Math.abs(entry.amount)) : entry.child + " earned " + (entry.kind === "money" ? money(entry.amount) : entry.amount + " points") + " for " + entry.task; parent.appendChild(line); }); }
+    const child = document.getElementById("childAllowanceView"); if (child) { child.replaceChildren(); const balance = getBalances()[getCurrentChildName()] || {money:0,points:0}; const cash = document.createElement("p"); cash.className = "balance-number"; cash.textContent = money(balance.money); const cashLabel = document.createElement("p"); cashLabel.textContent = "Virtual allowance balance"; const points = document.createElement("p"); points.className = "balance-number"; points.textContent = (balance.points || 0) + " points"; child.append(cash, cashLabel, points); const note = document.createElement("p"); note.className = "muted"; note.textContent = "This is a tracker only. Your parent handles real cash outside HomeBase."; child.appendChild(note); const amount = document.createElement("input"); amount.type = "number"; amount.min = "0.01"; amount.step = "0.01"; amount.max = String(balance.money || 0); amount.placeholder = "Amount to cash out"; amount.id = "cashoutAmount"; const request = document.createElement("button"); request.textContent = "Request Cash Out"; request.disabled = !(balance.money > 0); request.onclick = () => requestCashout(); child.append(amount, request); const pending = getCashoutRequests().find(x => x.child === getCurrentChildName() && x.status === "Pending"); if (pending) { const pendingText = document.createElement("p"); pendingText.className = "muted"; pendingText.textContent = "Cash-out request pending: " + money(pending.amount); child.appendChild(pendingText); } }
+}
+function renderAchievements() {
+    const children = getFamilyMembers().filter(m => m.role === "Child");
+    const containers = [["parentAchievementsView", false],["childAchievementsView", true],["dashboardAchievementsView", false]];
+    containers.forEach(([id, childOnly]) => { const container = document.getElementById(id); if (!container) return; container.replaceChildren(); const people = childOnly ? children.filter(x => x.name === getCurrentChildName()) : children; if (!people.length) { container.textContent = "Achievements will appear when children complete chores."; return; }
+        people.forEach(person => { const tasks = getTasks().filter(t => t.assignee === person.name && t.status === "Completed"); const points = (getBalances()[person.name] || {points:0}).points || 0; const badges = []; if (tasks.length >= 1) badges.push("🌟 First Chore"); if (tasks.length >= 5) badges.push("🤝 Family Helper"); if (tasks.length >= 10) badges.push("🏆 10 Chores Completed"); if (points >= 100) badges.push("💯 100 Points Earned"); const title = document.createElement("strong"); title.textContent = person.name; container.appendChild(title); const line = document.createElement("div"); line.className = "feature-list"; if (!badges.length) { const empty = document.createElement("span"); empty.className = "muted"; empty.textContent = "Your first badge is waiting!"; line.appendChild(empty); } badges.forEach(b => { const chip = document.createElement("span"); chip.className = "feature-chip"; chip.textContent = b; line.appendChild(chip); }); container.appendChild(line); }); });
+}
+function getPolls() { return readStore("homeBasePolls", []); }
+function renderPolls(parentMode) {
+    const id = parentMode ? "parentPollsView" : "childPollsView"; const container = document.getElementById(id); if (!container) return; container.replaceChildren();
+    if (parentMode) { const question = document.createElement("input"); question.id = "newPollQuestion"; question.placeholder = "Ask a family question"; question.style.width = "100%"; const options = document.createElement("input"); options.id = "newPollOptions"; options.placeholder = "Options separated by commas"; options.style.width = "100%"; const add = document.createElement("button"); add.textContent = "Create Poll"; add.onclick = () => { const q = question.value.trim(), choices = options.value.split(",").map(x => x.trim()).filter(Boolean); if (!q || choices.length < 2 || choices.length > 6) { alert("Enter a question and 2 to 6 comma-separated choices."); return; } const polls = getPolls(); polls.unshift({id:Date.now().toString(),question:q,options:choices,votes:{},createdAt:new Date().toISOString()}); writeStore("homeBasePolls",polls); renderNewFeatureViews(); }; container.append(question, options, add); }
+    const polls = getPolls(); if (!polls.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No family polls yet."; container.appendChild(empty); return; }
+    polls.forEach(poll => { const card = document.createElement("div"); card.className = "store-item"; const title = document.createElement("strong"); title.textContent = poll.question; card.appendChild(title); const voter = getReminderUser().name; const already = poll.votes && poll.votes[voter]; const total = Object.keys(poll.votes || {}).length; poll.options.forEach(option => { const count = Object.values(poll.votes || {}).filter(v => v === option).length; const row = document.createElement("div"); row.className = "poll-option"; const label = document.createElement("span"); label.textContent = option + " · " + count + " vote(s)"; row.appendChild(label); if (!already) { const vote = document.createElement("button"); vote.textContent = "Vote"; vote.onclick = () => castPollVote(poll.id, option); row.appendChild(vote); } const bar = document.createElement("div"); bar.className = "poll-bar"; const fill = document.createElement("span"); fill.style.width = (total ? count / total * 100 : 0) + "%"; bar.appendChild(fill); row.appendChild(bar); card.appendChild(row); }); if (already) { const note = document.createElement("p"); note.className = "muted"; note.textContent = "You voted: " + already; card.appendChild(note); } if (parentMode) { const remove = document.createElement("button"); remove.className = "danger"; remove.textContent = "Delete Poll"; remove.onclick = () => { writeStore("homeBasePolls", getPolls().filter(x => x.id !== poll.id)); renderNewFeatureViews(); }; card.appendChild(remove); } container.appendChild(card); });
+}
+function castPollVote(id, option) { const polls = getPolls(); const poll = polls.find(x => x.id === id); if (!poll) return; const voter = getReminderUser().name; if (poll.votes && poll.votes[voter]) { alert("You've already voted in this poll."); return; } if (!poll.options.includes(option)) return; if (!poll.votes) poll.votes = {}; poll.votes[voter] = option; writeStore("homeBasePolls", polls); renderNewFeatureViews(); }
+function renderDashboardPolls() { const container = document.getElementById("dashboardPollsView"); if (!container) return; container.replaceChildren(); const polls = getPolls(); if (!polls.length) { container.textContent = "No family polls yet."; return; } polls.forEach(poll => { const card = document.createElement("div"); card.className = "store-item"; const title = document.createElement("strong"); title.textContent = poll.question; card.appendChild(title); const total = Object.keys(poll.votes || {}).length; poll.options.forEach(option => { const count = Object.values(poll.votes || {}).filter(v => v === option).length; const p = document.createElement("p"); p.textContent = option + ": " + count + " vote(s)"; card.appendChild(p); }); const totalText = document.createElement("p"); totalText.className = "muted"; totalText.textContent = total + " total vote(s)"; card.appendChild(totalText); container.appendChild(card); }); }
+function renderNewFeatureViews() {
+    renderShoppingList("parentShoppingView", true); renderShoppingList("childShoppingView", true); renderShoppingList("dashboardShoppingView", false);
+    renderAllowanceViews(); renderStore(true); renderStore(false); renderAchievements(); renderPolls(true); renderPolls(false); renderDashboardPolls();
+}
 
 /* CROSS-TAB UPDATES */
 window.addEventListener("storage", function(event) {
@@ -838,6 +854,7 @@ window.addEventListener("storage", function(event) {
         if (document.getElementById("childDashboard").style.display !== "none") renderChildTasks();
         if (document.getElementById("parentDashboard").style.display !== "none") renderTaskManager();
         if (document.getElementById("dashboard").style.display !== "none") renderFamilyDashboardTasks();
+        renderNewFeatureViews();
     }
     if (event.key === "homeBaseMembers") {
         renderFamilyMembers();
@@ -851,10 +868,12 @@ window.addEventListener("storage", function(event) {
     if (event.key === "homeBaseReminders") {
         renderReminderViews();
     }
+    if (["homeBaseBalances", "homeBaseRewardHistory", "homeBaseStoreItems", "homeBaseRedemptionRequests", "homeBaseCashoutRequests", "homeBaseShopping", "homeBaseAchievements", "homeBasePolls"].includes(event.key)) renderNewFeatureViews();
 });
 renderFamilyMembers();
 renderCalendarViews();
 renderReminderViews();
+renderNewFeatureViews();
 </script>
 </body>
 </html>

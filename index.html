@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#315c46">
-<meta charset="UTF-8">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#315c46">
+    <meta name="theme-color" content="#315c46">
 <title>HomeBase</title>
 <style>
 * { box-sizing: border-box; }
@@ -64,6 +63,193 @@ h2 { margin-top: 0; }
 .balance-number { font-size: 28px; font-weight: bold; color: #315c46; margin: 6px 0; }
 .poll-bar { height: 8px; background: #e8eee9; border-radius: 20px; overflow: hidden; margin-top: 6px; }
 .poll-bar span { display: block; height: 100%; background: #5d8c6b; }
+/* HOMEBASE AUTHENTICATION / ONBOARDING DESIGN */
+:root {
+    --hb-forest: #234b3a;
+    --hb-green: #356b50;
+    --hb-sage: #e7efe8;
+    --hb-cream: #f7f8f3;
+    --hb-ink: #25372d;
+    --hb-muted: #718077;
+    --hb-line: #dce6dd;
+}
+body {
+    background: radial-gradient(circle at 12% 12%, #e6efe6 0, transparent 30%),
+                radial-gradient(circle at 90% 82%, #e8eee4 0, transparent 28%),
+                var(--hb-cream);
+    color: var(--hb-ink);
+}
+body > header {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 17px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    background: transparent;
+    color: var(--hb-forest);
+    border-radius: 0;
+}
+body > header h1 {
+    margin: 0;
+    font-size: 25px;
+    letter-spacing: -0.7px;
+}
+body > header p {
+    margin: 0;
+    color: var(--hb-muted);
+    font-size: 14px;
+}
+#welcomeScreen, #signInScreen, #familyLogin, #accountType,
+#parentSignup, #familySetup, #childSignup {
+    width: min(100% - 28px, 540px);
+    margin: 38px auto 60px;
+    padding: 38px clamp(22px, 5vw, 48px);
+    border: 1px solid #e6ece5;
+    border-radius: 26px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 22px 65px rgba(35,75,58,.10);
+    animation: hb-enter .28s ease-out;
+}
+@keyframes hb-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#welcomeScreen {
+    width: min(100% - 28px, 760px);
+    margin-top: 46px;
+    padding: 62px 34px 58px;
+    text-align: center;
+    background: linear-gradient(145deg, #ffffff 0%, #f7faf6 100%);
+}
+.welcome-mark {
+    width: 82px;
+    height: 82px;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 27px;
+    background: linear-gradient(145deg, #e5efe6, #f2f6ef);
+    color: var(--hb-forest);
+    font-size: 43px;
+    box-shadow: inset 0 0 0 1px #dce8dd;
+}
+#welcomeScreen h1 {
+    max-width: 620px;
+    margin: 0 auto 15px;
+    color: var(--hb-forest);
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -1.8px;
+}
+#welcomeScreen .welcome-copy {
+    max-width: 470px;
+    margin: 0 auto 32px;
+    color: var(--hb-muted);
+    font-size: 17px;
+    line-height: 1.7;
+}
+.welcome-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.welcome-actions button {
+    min-width: 178px;
+    min-height: 50px;
+    padding: 14px 25px;
+    border-radius: 13px;
+    font-size: 15px;
+    font-weight: 700;
+}
+button {
+    background: var(--hb-green);
+    border-radius: 10px;
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+}
+button:hover {
+    background: var(--hb-forest);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(35,75,58,.15);
+}
+button.secondary {
+    background: #eef3ee;
+    color: var(--hb-forest);
+    border: 1px solid #d7e2d8;
+}
+button.secondary:hover { background: #e2ebe3; }
+#welcomeScreen .welcome-actions .secondary {
+    background: white;
+    color: var(--hb-forest);
+    border: 1px solid #cbd9cd;
+}
+#signInScreen h2, #familyLogin h2, #accountType h2,
+#parentSignup h2, #familySetup h2, #childSignup h2 {
+    margin: 0 0 9px;
+    color: var(--hb-forest);
+    font-size: 29px;
+    letter-spacing: -.7px;
+}
+#signInScreen > p, #familyLogin > p, #accountType > p,
+#parentSignup > p, #familySetup > p, #childSignup > p {
+    margin: 0 0 25px;
+    color: var(--hb-muted);
+    line-height: 1.6;
+}
+#signInScreen label, #familyLogin label, #parentSignup label,
+#familySetup label, #childSignup label {
+    display: inline-block;
+    margin: 10px 0 6px;
+    color: #405449;
+    font-size: 13px;
+    font-weight: 700;
+}
+#signInScreen input, #familyLogin input, #parentSignup input,
+#familySetup input, #childSignup input {
+    width: 100%;
+    min-height: 47px;
+    margin: 0 0 8px;
+    padding: 12px 14px;
+    border: 1px solid var(--hb-line);
+    border-radius: 11px;
+    background: #fbfcfa;
+    outline: none;
+}
+#signInScreen input:focus, #familyLogin input:focus, #parentSignup input:focus,
+#familySetup input:focus, #childSignup input:focus {
+    border-color: #6c9878;
+    box-shadow: 0 0 0 3px rgba(83,137,99,.13);
+}
+#signInScreen button, #familyLogin button, #accountType button,
+#parentSignup button, #familySetup button, #childSignup button {
+    min-height: 44px;
+    padding: 11px 19px;
+    margin-top: 15px;
+}
+#signInScreen button:first-of-type, #parentSignup button:first-of-type,
+#familySetup button:first-of-type, #childSignup button:first-of-type {
+    min-width: 145px;
+}
+#accountType button {
+    min-width: 130px;
+    margin: 8px 7px 5px 0;
+}
+.signin-panel { max-width: 540px; }
+.signin-panel input { display: inline-block; }
+.signin-note {
+    padding: 13px 15px;
+    margin-top: 22px;
+    border: 1px solid #e2eae1;
+    border-radius: 12px;
+    background: #f3f7f1;
+    color: #647268;
+    font-size: 12px;
+    line-height: 1.6;
+}
+#signInMessage, #childSignupMessage { line-height: 1.5; }
 @media (max-width: 700px) {
     body { padding: 12px; }
     .form-grid { grid-template-columns: 1fr; }
@@ -76,11 +262,27 @@ h2 { margin-top: 0; }
     <p>One place for everything happening at home.</p>
 </header>
 
-<div id="welcomeScreen">
-    <h1>HomeBase</h1>
-    <p>Your family's home for staying organized.</p>
-    <button onclick="showAccountType()">Get Started</button><br><br>
-    <button onclick="showFamilyLogin()">Open Family Dashboard</button>
+<div id="welcomeScreen" class="welcome-panel">
+    <div class="welcome-mark" aria-hidden="true">🏠</div>
+    <h1>A happier, more organized home.</h1>
+    <p class="welcome-copy">Bring your family’s everyday plans together in one simple place.</p>
+    <div class="welcome-actions">
+        <button onclick="showAccountType()">Get Started</button>
+        <button class="secondary" onclick="showSignIn()">Sign In</button>
+    </div>
+</div>
+
+<div id="signInScreen" class="signin-panel" style="display:none;">
+    <h2>Welcome Back</h2>
+    <p>Sign in to your HomeBase account.</p>
+    <label for="signInEmail">Email Address</label><br>
+    <input type="email" id="signInEmail" placeholder="Enter your email" autocomplete="email"><br>
+    <label for="signInPassword">Password</label><br>
+    <input type="password" id="signInPassword" placeholder="Enter your password" autocomplete="current-password"><br>
+    <button onclick="attemptSignIn()">Sign In</button>
+    <button class="secondary" onclick="backToWelcome()">Back</button>
+    <p id="signInMessage" class="status-message" role="status"></p>
+    <div class="signin-note">Secure account sign-in is not connected yet. This screen is ready for the authentication setup. Entering details here will not create a session or save your password.</div>
 </div>
 
 <div id="familyLogin" style="display:none;">
@@ -93,10 +295,10 @@ h2 { margin-top: 0; }
 </div>
 
 <div id="accountType" style="display:none;">
-    <h2>Welcome to HomeBase</h2>
-    <p>First, choose your account type.</p>
-    <button onclick="selectRole('Parent')">Parent</button>
-    <button onclick="selectRole('Child')">Child</button><br><br>
+    <h2>Let's get your family set up.</h2>
+    <p>Choose the type of account you're creating. You can add the rest of your family afterward.</p>
+    <button onclick="selectRole('Parent')">I'm a Parent</button>
+    <button class="secondary" onclick="selectRole('Child')">I'm a Child</button><br>
     <button class="secondary" onclick="backToWelcome()">Back</button>
 </div>
 
@@ -224,7 +426,7 @@ h2 { margin-top: 0; }
     </div>
     <div class="dashboard-grid">
         <div class="dashboard-column">
-            <div class="dashboard-card"><h2>📊 Today's Overview</h2><p class="muted">Family tasks completed</p><div class="overview-number" id="familyTaskProgress">0/0</div><p id="familyTaskMessage">Let's get today started!</p></div>
+                        <div class="dashboard-card"><h2>📊 Today's Overview</h2><p class="muted">Family tasks completed</p><div class="overview-number" id="familyTaskProgress">0/0</div><p id="familyTaskMessage">Let's get today started!</p></div>
             <div class="dashboard-card"><h2>✅ Today's Family Tasks</h2><div id="familyDashboardTasks"></div></div>
         </div>
         <div class="dashboard-column">
@@ -249,13 +451,38 @@ h2 { margin-top: 0; }
 </div>
 
 <script>
-const screenIds = ["welcomeScreen","familyLogin","accountType","parentSignup","familySetup","parentDashboard","settingsPage","accountInfoPage","familyManagementPage","childSignup","childDashboard","dashboard"];
+const screenIds = ["welcomeScreen","signInScreen","familyLogin","accountType","parentSignup","familySetup","parentDashboard","settingsPage","accountInfoPage","familyManagementPage","childSignup","childDashboard","dashboard"];
 
 function hideAllScreens() {
     screenIds.forEach(id => document.getElementById(id).style.display = "none");
 }
-function backToWelcome() { hideAllScreens(); document.getElementById("welcomeScreen").style.display = "block"; }
+function backToWelcome() {
+    hideAllScreens();
+    document.getElementById("welcomeScreen").style.display = "block";
+    document.getElementById("signInEmail").value = "";
+    document.getElementById("signInPassword").value = "";
+    document.getElementById("signInMessage").textContent = "";
+}
 function showAccountType() { hideAllScreens(); document.getElementById("accountType").style.display = "block"; }
+function showSignIn() {
+    hideAllScreens();
+    document.getElementById("signInScreen").style.display = "block";
+    document.getElementById("signInMessage").textContent = "";
+}
+function attemptSignIn() {
+    const email = document.getElementById("signInEmail").value.trim();
+    const password = document.getElementById("signInPassword").value;
+    const message = document.getElementById("signInMessage");
+    if (!email || !password) {
+        message.textContent = "Please enter your email address and password.";
+        return;
+    }
+    if (!document.getElementById("signInEmail").checkValidity()) {
+        message.textContent = "Please enter a valid email address.";
+        return;
+    }
+    message.textContent = "Secure sign-in will be enabled when we connect HomeBase accounts. Your password has not been saved.";
+}
 function showFamilyLogin() { hideAllScreens(); document.getElementById("familyLogin").style.display = "block"; }
 function selectRole(role) { hideAllScreens(); document.getElementById(role === "Parent" ? "parentSignup" : "childSignup").style.display = "block"; }
 
@@ -480,7 +707,7 @@ function renderChildTasks() {
                 const choiceLabel = document.createElement("label"); choiceLabel.textContent = "Choose your reward: ";
                 const choice = document.createElement("select"); choice.id = "rewardChoice-" + task.id;
                 const moneyOption = document.createElement("option"); moneyOption.value = "money"; moneyOption.textContent = "Allowance (" + money(task.moneyAmount) + ")";
-                const pointsOption = document.createElement("option"); pointsOption.value = "points"; pointsOption.textContent = (task.pointsAmount || 0) + " points";
+                                const pointsOption = document.createElement("option"); pointsOption.value = "points"; pointsOption.textContent = (task.pointsAmount || 0) + " points";
                 choice.append(moneyOption, pointsOption); card.append(choiceLabel, choice);
             }
             const submit = document.createElement("button"); submit.textContent = "Submit for Approval"; submit.onclick = () => submitTask(task.id); card.appendChild(submit);
@@ -772,7 +999,7 @@ function renderShoppingList(containerId, canEdit) {
             const name = input.value.trim(); if (!name) return;
             const items = getShoppingItems(); items.push({ id: Date.now().toString() + Math.random().toString(36).slice(2,6), name, addedBy: getReminderUser().name, purchased: false, createdAt: new Date().toISOString() });
             saveShoppingItems(items); renderNewFeatureViews();
-        };
+                    };
         container.append(input, add);
     }
     const items = getShoppingItems().sort((a,b) => Number(a.purchased) - Number(b.purchased));

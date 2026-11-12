@@ -254,6 +254,42 @@ button.secondary:hover { background: #e2ebe3; }
     body { padding: 12px; }
     .form-grid { grid-template-columns: 1fr; }
 }
+/* THE STORY BEHIND HOMEBASE */
+.story-section {
+    max-width: 620px;
+    margin: 38px auto 0;
+    padding-top: 26px;
+    border-top: 1px solid var(--hb-line);
+}
+.story-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 17px;
+    background: #eef3ee;
+    color: var(--hb-forest);
+    border: 1px solid #d7e2d8;
+    border-radius: 12px;
+    font-weight: 700;
+}
+.story-toggle:hover { background: #e2ebe3; }
+.story-content {
+    margin-top: 18px;
+    padding: 24px;
+    text-align: left;
+    background: #f7faf6;
+    border: 1px solid #e2eae1;
+    border-radius: 16px;
+    line-height: 1.75;
+    color: #405449;
+}
+.story-content h2 {
+    margin: 0 0 14px;
+    color: var(--hb-forest);
+    font-size: 23px;
+}
+.story-content p { margin: 0 0 13px; }
+.story-content p:last-child { margin-bottom: 0; }
 </style>
 </head>
 <body>
@@ -267,10 +303,32 @@ button.secondary:hover { background: #e2ebe3; }
     <h1>A happier, more organized home.</h1>
     <p class="welcome-copy">Bring your family’s everyday plans together in one simple place.</p>
     <div class="welcome-actions">
-        <button onclick="showAccountType()">Get Started</button>
-        <button class="secondary" onclick="showSignIn()">Sign In</button>
-    </div>
+    <button onclick="showAccountType()">Get Started</button>
+    <button class="secondary" onclick="showSignIn()">Sign In</button>
 </div>
+
+<section class="story-section" aria-labelledby="storyToggle">
+    <button
+        id="storyToggle"
+        class="story-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="storyContent"
+        onclick="toggleStory()">
+        Read My Story <span id="storyArrow" aria-hidden="true">↓</span>
+    </button>
+
+    <div id="storyContent" class="story-content" hidden>
+        <h2>The Story Behind HomeBase</h2>
+        <p>Hello! I'm Melissa Versel, a student at The Davis Academy, and I chose to create HomeBase for my tech fair project because I saw a need in my own home.</p>
+        <p>I'll admit it: I wasn't always great at listening when I had a chore to do. But then I had an idea.</p>
+        <p>I tend to put things off because, for some reason, I feel like I need to have a screen in front of me to get things done (even though I really don't!). So I thought, why not create an app that meets that need?</p>
+        <p>That's how HomeBase was born.</p>
+        <p>I also got inspiration while scrolling on my phone and coming across videos of a home device that keeps track of schedules, calendars, and more. I can't remember what it was called, but the idea stuck with me.</p>
+        <p>I mean, what kid wouldn't be attracted to a random screen sitting in the kitchen when they walk in? That was my thought!</p>
+        <p>My original goal for HomeBase was to help my own family. And I believe it could help yours, too.</p>
+    </div>
+</section>
 
 <div id="signInScreen" class="signin-panel" style="display:none;">
     <h2>Welcome Back</h2>
@@ -462,6 +520,17 @@ function backToWelcome() {
     document.getElementById("signInEmail").value = "";
     document.getElementById("signInPassword").value = "";
     document.getElementById("signInMessage").textContent = "";
+}
+function toggleStory() {
+    const content = document.getElementById("storyContent");
+    const button = document.getElementById("storyToggle");
+    const arrow = document.getElementById("storyArrow");
+    const isOpening = content.hidden;
+
+    content.hidden = !isOpening;
+    button.setAttribute("aria-expanded", String(isOpening));
+    button.firstChild.textContent = isOpening ? "Hide My Story " : "Read My Story ";
+    arrow.textContent = isOpening ? "↑" : "↓";
 }
 function showAccountType() { hideAllScreens(); document.getElementById("accountType").style.display = "block"; }
 function showSignIn() {

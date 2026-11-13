@@ -290,6 +290,139 @@ button.secondary:hover { background: #e2ebe3; }
 }
 .story-content p { margin: 0 0 13px; }
 .story-content p:last-child { margin-bottom: 0; }
+/* HOMEBASE MONTHLY CALENDAR */
+.calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 18px 0 12px;
+}
+
+.calendar-toolbar h3 {
+    margin: 0;
+    color: #234b3a;
+    font-size: 20px;
+    text-align: center;
+}
+
+.calendar-toolbar button {
+    min-width: 42px;
+    padding: 9px 13px;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekday {
+    padding: 10px 3px;
+    background: #315c46;
+    color: white;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.calendar-day {
+    min-width: 0;
+    min-height: 115px;
+    padding: 6px;
+    background: white;
+    border: 1px solid #dce6dd;
+    overflow: hidden;
+}
+
+.calendar-day.calendar-empty {
+    background: #f2f5f1;
+}
+
+.calendar-day.today {
+    background: #f0f6ef;
+    box-shadow: inset 0 0 0 2px #6c9878;
+}
+
+.calendar-date-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 4px 7px;
+    margin: 0 0 5px;
+    border-radius: 7px;
+    background: #e7efe8;
+    color: #234b3a;
+    font-weight: bold;
+}
+
+.calendar-date-button:hover {
+    background: #d5e5d7;
+}
+
+.calendar-event {
+    padding: 5px;
+    margin: 4px 0;
+    border-radius: 5px;
+    background: #e7efe8;
+    color: #234b3a;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.calendar-event strong {
+    display: block;
+}
+
+.calendar-event-time {
+    display: block;
+    margin-top: 3px;
+    color: #647268;
+    font-size: 10px;
+}
+
+.calendar-event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.calendar-event-actions button {
+    padding: 4px 6px;
+    margin: 0;
+    font-size: 10px;
+}
+
+.calendar-empty-message {
+    margin-top: 12px;
+    color: #718077;
+    font-size: 13px;
+}
+
+@media (max-width: 700px) {
+    .calendar-day {
+        min-height: 85px;
+        padding: 3px;
+    }
+
+    .calendar-weekday {
+        font-size: 10px;
+        padding: 7px 1px;
+    }
+
+    .calendar-event {
+        padding: 3px;
+        font-size: 9px;
+    }
+
+    .calendar-event-actions button {
+        font-size: 9px;
+        padding: 3px;
+    }
+}
 </style>
 </head>
 <body>
@@ -305,6 +438,7 @@ button.secondary:hover { background: #e2ebe3; }
     <div class="welcome-actions">
     <button onclick="showAccountType()">Get Started</button>
     <button class="secondary" onclick="showSignIn()">Sign In</button>
+<button class="secondary" onclick="showFamilyLogin()">Open My Family Dashboard</button>
 </div>
 
 <section class="story-section" aria-labelledby="storyToggle">
@@ -324,11 +458,13 @@ button.secondary:hover { background: #e2ebe3; }
         <p>I'll admit it: I wasn't always great at listening when I had a chore to do. But then I had an idea.</p>
         <p>I tend to put things off because, for some reason, I feel like I need to have a screen in front of me to get things done (even though I really don't!). So I thought, why not create an app that meets that need?</p>
         <p>That's how HomeBase was born.</p>
-        <p>I also got inspiration while scrolling on my phone and coming across videos of a home device that keeps track of schedules, calendars, and more. I can't remember what it was called, but the idea stuck with me.</p>
+        <p>I also got inspiration while scrolling on my phone and coming across videos of a home device that keeps track of schedules, calendars, and more. It was called Nori Family Hub.</p>
         <p>I mean, what kid wouldn't be attracted to a random screen sitting in the kitchen when they walk in? That was my thought!</p>
         <p>My original goal for HomeBase was to help my own family. And I believe it could help yours, too.</p>
     </div>
 </section>
+
+</div>
 
 <div id="signInScreen" class="signin-panel" style="display:none;">
     <h2>Welcome Back</h2>
@@ -880,9 +1016,14 @@ function buildEventForm(containerId, mode) {
     const heading = document.createElement("h3"); heading.textContent = "＋ Add a Family Event";
     const form = document.createElement("div"); form.className = "task-card";
     const nameLabel = document.createElement("label"); nameLabel.textContent = "Event Name";
-    const nameInput = document.createElement("input"); nameInput.placeholder = "Example: Soccer practice"; nameInput.style.width = "100%";
+    const nameInput = document.createElement("input");
+nameInput.id = containerId + "NameInput";
+nameInput.placeholder = "Example: Soccer practice";
+nameInput.style.width = "100%";
     const dateLabel = document.createElement("label"); dateLabel.textContent = "Date";
-    const dateInput = document.createElement("input"); dateInput.type = "date";
+   const dateInput = document.createElement("input");
+dateInput.id = containerId + "DateInput";
+dateInput.type = "date";
     const timeLabel = document.createElement("label"); timeLabel.textContent = "Time (optional)";
     const timeInput = document.createElement("input"); timeInput.type = "time";
     const audienceLabel = document.createElement("label"); audienceLabel.textContent = "Who can see this?";
@@ -924,25 +1065,200 @@ function formatEventDate(dateString) {
     const parts = dateString.split("-").map(Number);
     return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
+let calendarDisplayedMonth = new Date();
+
 function renderEventList(containerId, mode) {
-    const container = document.getElementById(containerId); if (!container) return;
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
     container.replaceChildren();
-    const today = new Date(); today.setHours(0,0,0,0);
-    const todayString = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
-    const currentRole = sessionStorage.getItem("homeBaseCurrentRole") || localStorage.getItem("homeBaseCurrentRole") || "Dashboard";
-    const currentChild = getCurrentChildName();
-    let events = getEvents().filter(event => {
-        const visibleTo = event.audience || "Everyone";
-        return visibleTo === "Everyone" || visibleTo === currentChild || currentRole !== "Child";
+
+    const year = calendarDisplayedMonth.getFullYear();
+    const month = calendarDisplayedMonth.getMonth();
+
+    const monthName = new Date(year, month, 1).toLocaleDateString(
+        undefined,
+        { month: "long", year: "numeric" }
+    );
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "calendar-toolbar";
+
+    const previous = document.createElement("button");
+    previous.className = "secondary";
+    previous.textContent = "‹";
+    previous.setAttribute("aria-label", "Previous month");
+
+    previous.onclick = () => {
+        calendarDisplayedMonth = new Date(year, month - 1, 1);
+        renderCalendarViews();
+    };
+
+    const heading = document.createElement("h3");
+    heading.textContent = monthName;
+
+    const next = document.createElement("button");
+    next.className = "secondary";
+    next.textContent = "›";
+    next.setAttribute("aria-label", "Next month");
+
+    next.onclick = () => {
+        calendarDisplayedMonth = new Date(year, month + 1, 1);
+        renderCalendarViews();
+    };
+
+    toolbar.append(previous, heading, next);
+    container.appendChild(toolbar);
+
+    const weekdays = document.createElement("div");
+    weekdays.className = "calendar-weekdays";
+
+    ["Sunday", "Monday", "Tuesday", "Wednesday",
+     "Thursday", "Friday", "Saturday"].forEach(day => {
+        const label = document.createElement("div");
+        label.className = "calendar-weekday";
+        label.textContent = day;
+        weekdays.appendChild(label);
     });
-    events.sort((a,b) => (a.date + (a.time || "00:00")).localeCompare(b.date + (b.time || "00:00")));
-    const todayEvents = events.filter(event => event.date === todayString);
-    const upcoming = events.filter(event => event.date > todayString);
-    const past = events.filter(event => event.date < todayString);
-    appendEventGroup(container, "Today's Events", todayEvents, mode);
-    appendEventGroup(container, "Upcoming Events", upcoming, mode);
-    appendEventGroup(container, "Past Events", past, mode);
-    if (!events.length) container.textContent = "No family events yet.";
+
+    container.appendChild(weekdays);
+
+    const grid = document.createElement("div");
+    grid.className = "calendar-grid";
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+    const today = new Date();
+    const todayString = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0")
+    ].join("-");
+
+    const currentRole =
+        sessionStorage.getItem("homeBaseCurrentRole") ||
+        localStorage.getItem("homeBaseCurrentRole") ||
+        "Dashboard";
+
+    const currentChild = getCurrentChildName();
+
+    const events = getEvents().filter(event => {
+        const visibleTo = event.audience || "Everyone";
+
+        return visibleTo === "Everyone" ||
+            visibleTo === currentChild ||
+            currentRole !== "Child";
+    });
+
+    events.sort((a, b) =>
+        (a.time || "00:00").localeCompare(b.time || "00:00")
+    );
+
+    let monthHasEvents = false;
+
+    for (let cell = 0; cell < totalCells; cell++) {
+        const dayNumber = cell - firstDay + 1;
+
+        const dayCell = document.createElement("div");
+        dayCell.className = "calendar-day";
+
+        if (dayNumber < 1 || dayNumber > daysInMonth) {
+            dayCell.classList.add("calendar-empty");
+            grid.appendChild(dayCell);
+            continue;
+        }
+
+        const dateString = [
+            year,
+            String(month + 1).padStart(2, "0"),
+            String(dayNumber).padStart(2, "0")
+        ].join("-");
+
+        if (dateString === todayString) {
+            dayCell.classList.add("today");
+        }
+
+        const dateButton = document.createElement("button");
+        dateButton.className = "calendar-date-button";
+        dateButton.textContent = dayNumber;
+
+        dateButton.onclick = () => {
+            const formId = mode + "EventForm";
+            const dateInput = document.getElementById(formId + "DateInput");
+            const nameInput = document.getElementById(formId + "NameInput");
+
+            if (dateInput) {
+                dateInput.value = dateString;
+
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }
+        };
+
+        dayCell.appendChild(dateButton);
+
+        const dayEvents = events.filter(event =>
+            event.date === dateString
+        );
+
+        dayEvents.forEach(event => {
+            monthHasEvents = true;
+
+            const eventBox = document.createElement("div");
+            eventBox.className = "calendar-event";
+
+            const eventName = document.createElement("strong");
+            eventName.textContent = event.name;
+
+            eventBox.appendChild(eventName);
+
+            if (event.time) {
+                const time = document.createElement("span");
+                time.className = "calendar-event-time";
+                time.textContent = event.time;
+                eventBox.appendChild(time);
+            }
+
+            const current = getEventCreator();
+
+            if (
+                current.role === "Parent" ||
+                event.createdBy === current.name
+            ) {
+                const actions = document.createElement("div");
+                actions.className = "calendar-event-actions";
+
+                const edit = document.createElement("button");
+                edit.className = "secondary";
+                edit.textContent = "Edit";
+                edit.onclick = () => editEvent(event.id);
+
+                const remove = document.createElement("button");
+                remove.className = "danger";
+                remove.textContent = "Delete";
+                remove.onclick = () => deleteEvent(event.id);
+
+                actions.append(edit, remove);
+                eventBox.appendChild(actions);
+            }
+
+            dayCell.appendChild(eventBox);
+        });
+
+        grid.appendChild(dayCell);
+    }
+
+    container.appendChild(grid);
+
+    if (!monthHasEvents) {
+        const message = document.createElement("p");
+        message.className = "calendar-empty-message";
+        message.textContent = "No events scheduled for this month yet.";
+        container.appendChild(message);
+    }
 }
 function renderCalendarViews() {
     buildEventForm("parentEventForm", "parent");

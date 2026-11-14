@@ -398,7 +398,7 @@ button.secondary:hover { background: #e2ebe3; }
 
 .calendar-empty-message {
     margin-top: 12px;
-    color: #718077;
+        color: #718077;
     font-size: 13px;
 }
 
@@ -424,6 +424,7 @@ button.secondary:hover { background: #e2ebe3; }
     }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <header>
@@ -559,9 +560,40 @@ button.secondary:hover { background: #e2ebe3; }
     <h2>⚙️ Settings</h2>
     <div class="card" onclick="openAccountInfo()"><h3>👤 Account Information</h3><p>Name and email.</p></div>
     <div class="card" onclick="openFamilyManagement()"><h3>👨‍👩‍👧 Family Management</h3><p>Family name, invitation code, and members.</p></div>
+    <div class="card" onclick="openVoiceProfile()" style="cursor:pointer;"><h3>🎙️ Base Voice Profile</h3><p>Choose your profile and set up spoken profile selection.</p></div>
     <div class="card"><h3>🔔 Notifications</h3><p>Reminders and alerts coming soon.</p></div>
     <div class="card"><h3>🔒 Privacy & Security</h3><p>Account security and permissions.</p></div>
     <button onclick="closeSettings()">Back to Dashboard</button>
+</div>
+
+<div id="voiceProfilePage" style="display:none;">
+    <h2>🎙️ My Base Voice Profile</h2>
+    <p class="muted">Choose which family profile Base should use. Voice setup listens for a spoken name; it does not identify a person's unique voice.</p>
+
+    <div class="card">
+        <h3>My family profile</h3>
+        <label for="baseVoiceProfileSelect">Choose your profile</label><br>
+        <select id="baseVoiceProfileSelect" style="width:100%;"></select>
+
+        <br><br>
+        <label>
+            <input type="checkbox" id="baseVoiceEnabled">
+            Enable spoken profile selection
+        </label>
+
+        <p class="muted">You can always choose your profile manually. No voice recordings are saved.</p>
+        <button type="button" id="baseVoiceStartButton" onclick="startBaseVoiceSetup()">
+    🎙️ Choose Profile With Voice
+</button>
+
+<button type="button" id="baseVoiceStopButton" class="danger"
+        onclick="stopBaseVoiceSetup()" style="display:none;">
+    ⏹ Stop Listening
+</button>
+        <p id="baseVoiceStatus" class="status-message" role="status"></p>
+    </div>
+
+    <button class="secondary" onclick="closeVoiceProfile()">Back</button>
 </div>
 
 <div id="accountInfoPage" style="display:none;">
@@ -610,6 +642,7 @@ button.secondary:hover { background: #e2ebe3; }
     <div class="card"><h3>🛒 Family Shopping List</h3><div id="childShoppingView"></div></div>
     <div class="card"><h3>🏆 My Achievements</h3><div id="childAchievementsView"></div></div>
     <div class="card"><h3>🗳️ Family Polls</h3><div id="childPollsView"></div></div>
+    <button class="secondary" onclick="openVoiceProfile()">🎙️ Base Voice Profile</button>
     <button class="secondary back-button" onclick="backToWelcome()">Back to Welcome Screen</button>
 </div>
 
@@ -645,7 +678,7 @@ button.secondary:hover { background: #e2ebe3; }
 </div>
 
 <script>
-const screenIds = ["welcomeScreen","signInScreen","familyLogin","accountType","parentSignup","familySetup","parentDashboard","settingsPage","accountInfoPage","familyManagementPage","childSignup","childDashboard","dashboard"];
+const screenIds = ["welcomeScreen","signInScreen","familyLogin","accountType","parentSignup","familySetup","parentDashboard","settingsPage","voiceProfilePage","accountInfoPage","familyManagementPage","childSignup","childDashboard","dashboard"];
 
 function hideAllScreens() {
     screenIds.forEach(id => document.getElementById(id).style.display = "none");
@@ -674,32 +707,168 @@ function showSignIn() {
     document.getElementById("signInScreen").style.display = "block";
     document.getElementById("signInMessage").textContent = "";
 }
-function attemptSignIn() {
+
+async function attemptSignIn() {
     const email = document.getElementById("signInEmail").value.trim();
     const password = document.getElementById("signInPassword").value;
     const message = document.getElementById("signInMessage");
+
     if (!email || !password) {
         message.textContent = "Please enter your email address and password.";
         return;
     }
+
     if (!document.getElementById("signInEmail").checkValidity()) {
         message.textContent = "Please enter a valid email address.";
         return;
     }
-    message.textContent = "Secure sign-in will be enabled when we connect HomeBase accounts. Your password has not been saved.";
+
+    message.textContent = "Signing in...";
+
+    const { data, error } = await homeBaseSupabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        message.textContent = error.message;
+        return;
+    }
+
+    localStorage.setItem(
+        "homeBaseParentEmail",
+        data.user.email
+    );
+
+    localStorage.setItem(
+        "homeBaseParentName",
+        data.user.user_metadata?.full_name || "Parent"
+    );
+
+    message.textContent = "Successfully signed in!";
+
+    try {
+        const { data: memberships, error: membershipError } =
+            await homeBaseSupabase
+                .from("family_members")
+                .select("family_id, role")
+                .eq("user_id", data.user.id)
+                .eq("role", "parent");
+
+        if (membershipError) {
+            console.error(membershipError);
+            message.textContent =
+                "Signed in, but couldn't load your family. Please try again.";
+            return;
+        }
+
+        if (!memberships || memberships.length === 0) {
+            hideAllScreens();
+            document.getElementById("familySetup").style.display = "block";
+            return;
+        }
+
+        if (memberships.length > 1) {
+            message.textContent =
+                "You belong to multiple families. Family selection is coming soon.";
+            return;
+        }
+
+        const familyId = memberships[0].family_id;
+
+        const { data: family, error: familyError } =
+            await homeBaseSupabase
+                .from("families")
+                .select("*")
+                .eq("id", familyId)
+                .single();
+
+        if (familyError) {
+            console.error(familyError);
+            message.textContent = "Couldn't load your family details.";
+            return;
+        }
+
+        localStorage.setItem("homeBaseFamilyId", familyId);
+        localStorage.setItem("homeBaseFamilyName", family.name);
+
+        message.textContent =
+           // Save the signed-in family information
+localStorage.setItem("homeBaseCurrentRole", "Parent");
+sessionStorage.setItem("homeBaseCurrentRole", "Parent");
+
+// Load the family dashboard
+hideAllScreens();
+
+document.getElementById("parentDashboard").style.display = "block";
+
+document.getElementById("parentDashboardGreeting").textContent =
+    "Welcome to " + family.name + "!";
+
+renderFamilyMembers();
+renderTaskManager();
+renderCalendarViews();
+renderReminderViews();
+renderNewFeatureViews();
+
+message.textContent = "Welcome back!";
+
+    } catch (error) {
+        console.error(error);
+        message.textContent = "Something went wrong loading your family.";
+    }
 }
+
 function showFamilyLogin() { hideAllScreens(); document.getElementById("familyLogin").style.display = "block"; }
 function selectRole(role) { hideAllScreens(); document.getElementById(role === "Parent" ? "parentSignup" : "childSignup").style.display = "block"; }
 
-function showFamilySetup() {
+async function showFamilySetup() {
     const name = document.getElementById("parentName").value.trim();
     const email = document.getElementById("parentEmail").value.trim();
     const password = document.getElementById("parentPassword").value;
-    if (!name || !email || !password) { alert("Please fill in your name, email, and password."); return; }
-    if (!document.getElementById("parentEmail").checkValidity()) { alert("Please enter a valid email address."); return; }
+
+    if (!name || !email || !password) {
+        alert("Please fill in your name, email, and password.");
+        return;
+    }
+
+    if (!document.getElementById("parentEmail").checkValidity()) {
+        alert("Please enter a valid email address.");
+        return;
+    }
+
+    if (password.length < 6) {
+        alert("Your password must be at least 6 characters long.");
+        return;
+    }
+
     localStorage.setItem("homeBaseParentName", name);
     localStorage.setItem("homeBaseParentEmail", email);
-    hideAllScreens(); document.getElementById("familySetup").style.display = "block";
+
+    alert("Creating your HomeBase account...");
+
+    const { data, error } = await homeBaseSupabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                full_name: name
+            }
+        }
+    });
+
+    if (error) {
+        alert("Account creation failed: " + error.message);
+        return;
+    }
+
+    if (!data.session) {
+        alert("Account created! Please check your email to confirm your account. Then sign in to continue setting up your family.");
+        return;
+    }
+
+    hideAllScreens();
+    document.getElementById("familySetup").style.display = "block";
 }
 function getFamilyMembers() {
     try { return JSON.parse(localStorage.getItem("homeBaseMembers")) || []; } catch { return []; }
@@ -710,30 +879,93 @@ function getTasks() {
 }
 function saveTasks(tasks) { localStorage.setItem("homeBaseTasks", JSON.stringify(tasks)); }
 
-function createFamily() {
+
+
+async function createFamily() {
     const familyName = document.getElementById("familyName").value.trim();
-    if (!familyName) { alert("Please enter your family name."); return; }
-    const existingCode = localStorage.getItem("homeBaseFamilyCode");
-    if (existingCode && !confirm("A family already exists in this browser. Replace its local demo family?")) return;
-    const code = "HOME-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-    const parentName = localStorage.getItem("homeBaseParentName") || "Parent";
+
+    if (!familyName) {
+        alert("Please enter your family name.");
+        return;
+    }
+
+    const { data: authData, error: authError } =
+        await homeBaseSupabase.auth.getUser();
+
+    if (authError || !authData.user) {
+        alert("Please sign in before creating a family.");
+        return;
+    }
+
+    const user = authData.user;
+    const parentName =
+        localStorage.getItem("homeBaseParentName") || "Parent";
+
+    // STEP 1: Create the family
+    const { data: family, error: familyError } =
+        await homeBaseSupabase
+            .from("families")
+            .insert({
+                name: familyName,
+                created_by: user.id
+            })
+            .select()
+            .single();
+
+    if (familyError) {
+        console.error("Family creation error:", familyError);
+        alert("Couldn't create family: " + familyError.message);
+        return;
+    }
+
+    console.log("Family created:", family.id);
+
+    // STEP 2: Add the parent as a family member
+    const { error: memberError } =
+        await homeBaseSupabase
+            .from("family_members")
+            .insert({
+                family_id: family.id,
+                user_id: user.id,
+                display_name: parentName,
+                role: "parent"
+            });
+
+    if (memberError) {
+        console.error("Parent membership error:", memberError);
+        alert(
+            "Family created, but parent membership failed: " +
+            memberError.message
+        );
+        return;
+    }
+
+    // STEP 3: Save family information
+    localStorage.setItem("homeBaseFamilyId", family.id);
+    localStorage.setItem("homeBaseFamilyName", familyName);
     localStorage.setItem("homeBaseCurrentRole", "Parent");
     sessionStorage.setItem("homeBaseCurrentRole", "Parent");
-    localStorage.setItem("homeBaseFamilyName", familyName);
-    localStorage.setItem("homeBaseFamilyCode", code);
+
     saveFamilyMembers([{ name: parentName, role: "Parent" }]);
     saveTasks([]);
     saveEvents([]);
     saveReminders([]);
+
+    // STEP 4: Open the parent dashboard
     renderNewFeatureViews();
     renderFamilyMembers();
     hideAllScreens();
+
     document.getElementById("parentDashboard").style.display = "block";
-    document.getElementById("parentDashboardGreeting").textContent = "Welcome to " + familyName + "!";
+    document.getElementById("parentDashboardGreeting").textContent =
+        "Welcome to " + familyName + "!";
+
     renderTaskManager();
     renderCalendarViews();
     renderReminderViews();
     renderNewFeatureViews();
+
+    alert("Your family was successfully created!");
 }
 
 function createChildAccount() {
@@ -923,7 +1155,7 @@ function renderChildTasks() {
     });
 }
 function submitTask(taskId) {
-    const tasks = getTasks(); const task = tasks.find(item => item.id === taskId); if (!task) return;
+        const tasks = getTasks(); const task = tasks.find(item => item.id === taskId); if (!task) return;
     let selectedReward = task.rewardMode;
     if (task.rewardMode === "choice") {
         const choice = document.getElementById("rewardChoice-" + task.id);
@@ -1173,7 +1405,7 @@ function renderEventList(containerId, mode) {
         const dateString = [
             year,
             String(month + 1).padStart(2, "0"),
-            String(dayNumber).padStart(2, "0")
+                        String(dayNumber).padStart(2, "0")
         ].join("-");
 
         if (dateString === todayString) {
@@ -1323,7 +1555,7 @@ function buildReminderForm() {
     container.append(title, input, date, audience, add);
 }
 function renderReminderList(containerId, mode) {
-    const container = document.getElementById(containerId); if (!container) return;
+        const container = document.getElementById(containerId); if (!container) return;
     container.replaceChildren();
     const current = getReminderUser();
     const reminders = getReminders().filter(item => item.audience === "Everyone" || item.audience === current.name || current.role !== "Child");
@@ -1423,7 +1655,7 @@ function renderStore(parentMode) {
         container.appendChild(card);
     });
     if (parentMode) {
-        const heading = document.createElement("h4"); heading.textContent = "Redemption requests"; container.appendChild(heading);
+                const heading = document.createElement("h4"); heading.textContent = "Redemption requests"; container.appendChild(heading);
         const requests = getRedemptionRequests().filter(x => x.status === "Pending");
         if (!requests.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No reward requests waiting."; container.appendChild(empty); }
         requests.forEach(req => { const row = document.createElement("div"); row.className = "store-item"; row.textContent = req.child + " requested " + req.rewardName + " (" + req.points + " points). ";
@@ -1513,5 +1745,1506 @@ if ("serviceWorker" in navigator) {
     });
 }
 </script>
+ <script>
+    // HOMEBASE SUPABASE CONNECTION
+
+    const HOMEBASE_SUPABASE_URL =
+        "https://cdyuxvtalelopkfurtck.supabase.co";
+
+    const HOMEBASE_SUPABASE_KEY =
+        "sb_publishable_mNFgcWAeC8LJ8lcEeMP6fQ_50XgXL-P";   
+const homeBaseSupabase = window.supabase.createClient(
+        HOMEBASE_SUPABASE_URL,
+        HOMEBASE_SUPABASE_KEY
+    );
+
+    console.log("HomeBase Supabase client initialized!");
+    homeBaseSupabase
+    .from("families")
+    .select("*")
+    .then(({ data, error }) => {
+        console.log("Database test:", { data, error });
+    });
+</script>
+<script>
+/* HOMEBASE CLOUD SYNC PATCH */
+(function () {
+    const original = {
+        saveTasks: window.saveTasks,
+        saveEvents: window.saveEvents,
+        saveReminders: window.saveReminders,
+        saveShoppingItems: window.saveShoppingItems,
+        saveFamilyMembers: window.saveFamilyMembers,
+        attemptSignIn: window.attemptSignIn,
+        createFamily: window.createFamily,
+        loadFamilyDashboard: window.loadFamilyDashboard
+    };
+
+    const storageKeys = {
+        tasks: "homeBaseTasks",
+        events: "homeBaseEvents",
+        reminders: "homeBaseReminders",
+        shopping_items: "homeBaseShopping"
+    };
+    const queues = {};
+
+    function readLocal(key) {
+        try {
+            return JSON.parse(localStorage.getItem(key)) || [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function writeLocal(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function newCloudId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+            return window.crypto.randomUUID();
+        }
+
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0;
+            return (c === "x" ? r : (r & 3 | 8)).toString(16);
+        });
+    }
+
+    async function getParentFamily() {
+        const familyId = localStorage.getItem("homeBaseFamilyId");
+        if (!familyId) return null;
+
+        const role = sessionStorage.getItem("homeBaseCurrentRole") ||
+            localStorage.getItem("homeBaseCurrentRole");
+
+        if (role === "Child") return null;
+
+        const { data: authData, error: authError } =
+            await homeBaseSupabase.auth.getUser();
+
+        if (authError || !authData.user) return null;
+
+        const { data: membership, error } = await homeBaseSupabase
+            .from("family_members")
+            .select("id")
+            .eq("family_id", familyId)
+            .eq("user_id", authData.user.id)
+            .eq("role", "parent")
+            .maybeSingle();
+
+        if (error || !membership) return null;
+
+        return {
+            familyId: familyId,
+            userId: authData.user.id
+        };
+    }
+
+    function toCloudRow(table, item, familyId) {
+        if (!item.cloudId) item.cloudId = newCloudId();
+
+        if (table === "tasks") {
+            return {
+                id: item.cloudId,
+                family_id: familyId,
+                title: item.name || "Untitled task",
+                description: null,
+                assigned_member_id: null,
+                due_date: item.dueDate || null,
+                status: String(item.status || "Assigned")
+                    .toLowerCase()
+                    .replace(/\s+/g, "_"),
+                metadata: {
+                    localId: item.id,
+                    assignee: item.assignee || "Unassigned",
+                    rewardMode: item.rewardMode || "none",
+                    moneyAmount: Number(item.moneyAmount || 0),
+                    pointsAmount: Number(item.pointsAmount || 0),
+                    photo: item.photo || "",
+                    selectedReward: item.selectedReward || "",
+                    originalStatus: item.status || "Assigned",
+                    createdAt: item.createdAt || ""
+                }
+            };
+        }
+
+        if (table === "events") {
+            return {
+                id: item.cloudId,
+                family_id: familyId,
+                title: item.name || "Untitled event",
+                event_date: item.date,
+                event_time: item.time || null,
+                audience: item.audience === "Everyone"
+                    ? "everyone"
+                    : (item.audience || "everyone"),
+                audience_member_id: null
+            };
+        }
+
+        if (table === "reminders") {
+            return {
+                id: item.cloudId,
+                family_id: familyId,
+                title: item.text || "Reminder",
+                target_member_id: null,
+                acknowledged: Array.isArray(item.acknowledged) &&
+                    item.acknowledged.length > 0
+            };
+        }
+
+        return {
+            id: item.cloudId,
+            family_id: familyId,
+            item_name: item.name || "Shopping item",
+            is_checked: Boolean(item.purchased)
+        };
+    }    function fromCloudRow(table, row) {
+        if (table === "tasks") {
+            const meta = row.metadata || {};
+
+            return {
+                id: meta.localId || row.id,
+                cloudId: row.id,
+                name: row.title,
+                assignee: meta.assignee || "Unassigned",
+                dueDate: row.due_date || "",
+                rewardMode: meta.rewardMode || "none",
+                moneyAmount: Number(meta.moneyAmount || 0),
+                pointsAmount: Number(meta.pointsAmount || 0),
+                status: meta.originalStatus ||
+                    String(row.status || "assigned").replace(/_/g, " "),
+                photo: meta.photo || "",
+                selectedReward: meta.selectedReward || "",
+                createdAt: meta.createdAt || row.created_at
+            };
+        }
+
+        if (table === "events") {
+            return {
+                id: row.id,
+                cloudId: row.id,
+                name: row.title,
+                date: row.event_date,
+                time: row.event_time || "",
+                audience: row.audience === "everyone"
+                    ? "Everyone"
+                    : row.audience,
+                createdBy: "Family",
+                createdByRole: "Parent"
+            };
+        }
+
+        if (table === "reminders") {
+            return {
+                id: row.id,
+                cloudId: row.id,
+                text: row.title,
+                date: "",
+                audience: "Everyone",
+                createdBy: "Family",
+                acknowledged: row.acknowledged ? ["Family"] : []
+            };
+        }
+
+        return {
+            id: row.id,
+            cloudId: row.id,
+            name: row.item_name,
+            addedBy: "Family",
+            purchased: Boolean(row.is_checked)
+        };
+    }
+
+    async function syncOneTable(table, items, familyId) {
+        const rows = items.map(item =>
+            toCloudRow(table, item, familyId)
+        );
+
+        writeLocal(storageKeys[table], items);
+
+        const { data: existing, error: readError } =
+            await homeBaseSupabase
+                .from(table)
+                .select("id")
+                .eq("family_id", familyId);
+
+        if (readError) throw readError;
+
+        if (rows.length) {
+            const { error: saveError } = await homeBaseSupabase
+                .from(table)
+                .upsert(rows, { onConflict: "id" });
+
+            if (saveError) throw saveError;
+        }
+
+        const keep = new Set(rows.map(row => row.id));
+
+        for (const record of (existing || [])) {
+            if (!keep.has(record.id)) {
+                const { error: deleteError } = await homeBaseSupabase
+                    .from(table)
+                    .delete()
+                    .eq("family_id", familyId)
+                    .eq("id", record.id);
+
+                if (deleteError) throw deleteError;
+            }
+        }
+    }
+
+    function queueSync(table) {
+        const key = storageKeys[table];
+        if (!key) return;
+
+        queues[table] = (queues[table] || Promise.resolve())
+            .then(async function () {
+                const family = await getParentFamily();
+                if (!family) return;
+
+                await syncOneTable(
+                    table,
+                    readLocal(key),
+                    family.familyId
+                );
+            })
+            .catch(error => {
+                console.error(
+                    "HomeBase cloud sync failed for " + table + ":",
+                    error
+                );
+            });
+    }
+
+    let homeBaseRealtimeChannel = null;
+let homeBaseRealtimeFamilyId = null;
+let homeBaseRealtimeReloadTimer = null;
+
+async function startHomeBaseRealtime() {
+    const family = await getParentFamily();
+
+    if (!family) return;
+
+    // Don't create duplicate listeners for the same family.
+    if (
+        homeBaseRealtimeChannel &&
+        homeBaseRealtimeFamilyId === family.familyId
+    ) {
+        return;
+    }
+
+    // Remove an old listener if the signed-in family changed.
+    if (homeBaseRealtimeChannel) {
+        await homeBaseSupabase.removeChannel(
+            homeBaseRealtimeChannel
+        );
+
+        homeBaseRealtimeChannel = null;
+    }
+
+    homeBaseRealtimeFamilyId = family.familyId;
+
+    const tables = [
+        "tasks",
+        "events",
+        "reminders",
+        "shopping_items"
+    ];
+
+    let channel = homeBaseSupabase.channel(
+        "homebase-family-" + family.familyId
+    );
+
+    tables.forEach(table => {
+        channel = channel.on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: table,
+                filter: "family_id=eq." + family.familyId
+            },
+            () => {
+                // Combine rapid updates into one reload.
+                clearTimeout(homeBaseRealtimeReloadTimer);
+
+                homeBaseRealtimeReloadTimer = setTimeout(() => {
+                    loadCloudData();
+                }, 300);
+            }
+        );
+    });
+
+    homeBaseRealtimeChannel = channel;
+
+    channel.subscribe(status => {
+        console.log("HomeBase live sync:", status);
+    });
+}
+    async function loadCloudData() {
+        const family = await getParentFamily();
+        if (!family) return;
+
+        const tables = [
+            "tasks",
+            "events",
+            "reminders",
+            "shopping_items"
+        ];
+
+        for (const table of tables) {
+            const { data, error } = await homeBaseSupabase
+                .from(table)
+                .select("*")
+                .eq("family_id", family.familyId);
+
+            if (error) {
+                console.error(
+                    "HomeBase could not load " + table + ":",
+                    error
+                );
+                continue;
+            }
+
+            const local = readLocal(storageKeys[table]);
+            const cloudItems = (data || []).map(row =>
+                fromCloudRow(table, row)
+            );
+
+            const cloudIds = new Set(
+                cloudItems.map(item => item.cloudId)
+            );
+
+            const localOnly = local.filter(item =>
+                !item.cloudId || !cloudIds.has(item.cloudId)
+            );
+
+            if (localOnly.length) {
+                try {
+                    await syncOneTable(
+                        table,
+                        cloudItems.concat(localOnly),
+                        family.familyId
+                    );
+                } catch (syncError) {
+                    console.error(
+                        "HomeBase could not upload local " + table + ":",
+                        syncError
+                    );
+                }
+            }
+
+            writeLocal(
+                storageKeys[table],
+                cloudItems.concat(localOnly)
+            );
+        }
+
+        renderTaskManager();
+        renderFamilyDashboardTasks();
+        renderCalendarViews();
+        renderReminderViews();
+        renderNewFeatureViews();
+        renderDashboardTaskFilter();
+        await startHomeBaseRealtime();
+    }
+
+    window.saveTasks = function (items) {
+        original.saveTasks(items);
+        queueSync("tasks");
+    };
+
+    window.saveEvents = function (items) {
+        original.saveEvents(items);
+        queueSync("events");
+    };
+
+    window.saveReminders = function (items) {
+        original.saveReminders(items);
+        queueSync("reminders");
+    };
+
+    window.saveShoppingItems = function (items) {
+        original.saveShoppingItems(items);
+        queueSync("shopping_items");
+    };
+
+    window.saveFamilyMembers = function (members) {
+        original.saveFamilyMembers(members);
+        renderDashboardTaskFilter();
+    };
+
+    window.attemptSignIn = async function () {
+        await original.attemptSignIn();
+
+        if (
+            document.getElementById("parentDashboard").style.display !== "none"
+        ) {
+            await loadCloudData();
+        }
+    };
+
+    window.createFamily = async function () {
+        await original.createFamily();
+        await loadCloudData();
+    };
+
+    window.loadFamilyDashboard = function () {
+        original.loadFamilyDashboard();
+        loadCloudData();
+    };
+        function addDashboardControls() {
+        const taskContainer =
+            document.getElementById("familyDashboardTasks");
+
+        if (
+            taskContainer &&
+            !document.getElementById("dashboardTaskFilter")
+        ) {
+            const filter = document.createElement("select");
+            filter.id = "dashboardTaskFilter";
+            filter.style.width = "100%";
+            filter.style.marginBottom = "12px";
+
+            filter.addEventListener(
+                "change",
+                renderFamilyDashboardTasks
+            );
+
+            taskContainer.parentElement.insertBefore(
+                filter,
+                taskContainer
+            );
+        }
+
+        addDashboardButton(
+            "dashboardEventList",
+            "dashboardAddEvent",
+            "+ Add Event",
+            function () {
+                const name = prompt("Event name:");
+                if (!name || !name.trim()) return;
+
+                const date = prompt("Date (YYYY-MM-DD):");
+
+                if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                    alert("Please enter the date as YYYY-MM-DD.");
+                    return;
+                }
+
+                const events = readLocal("homeBaseEvents");
+
+                events.push({
+                    id: Date.now().toString(),
+                    name: name.trim(),
+                    date: date,
+                    time: "",
+                    audience: "Everyone",
+                    createdBy: "Family Dashboard",
+                    createdByRole: "Dashboard"
+                });
+
+                saveEvents(events);
+                renderCalendarViews();
+            }
+        );
+
+        addDashboardButton(
+            "dashboardReminderList",
+            "dashboardAddReminder",
+            "+ Add Reminder",
+            function () {
+                const text = prompt("Reminder:");
+                if (!text || !text.trim()) return;
+
+                const reminders = readLocal("homeBaseReminders");
+
+                reminders.push({
+                    id: Date.now().toString(),
+                    text: text.trim(),
+                    date: "",
+                    audience: "Everyone",
+                    createdBy: "Family Dashboard",
+                    acknowledged: []
+                });
+
+                saveReminders(reminders);
+                renderReminderViews();
+            }
+        );
+
+        addDashboardButton(
+            "dashboardShoppingView",
+            "dashboardAddShopping",
+            "+ Add Shopping Item",
+            function () {
+                const name = prompt("Shopping item:");
+                if (!name || !name.trim()) return;
+
+                const items = readLocal("homeBaseShopping");
+
+                items.push({
+                    id: Date.now().toString() +
+                        Math.random().toString(36).slice(2, 6),
+                    name: name.trim(),
+                    addedBy: "Family Dashboard",
+                    purchased: false,
+                    createdAt: new Date().toISOString()
+                });
+
+                saveShoppingItems(items);
+                renderNewFeatureViews();
+            }
+        );
+
+        addDashboardButton(
+            "familyDashboardTasks",
+            "dashboardAddTask",
+            "+ Add Task",
+            function () {
+                const children = getFamilyMembers().filter(
+                    member => member.role === "Child"
+                );
+
+                if (!children.length) {
+                    alert("Create a child profile first, then you can assign a task.");
+                    return;
+                }
+
+                const name = prompt("Task name:");
+                if (!name || !name.trim()) return;
+
+                const names = children.map(child => child.name);
+
+                const assignee = prompt(
+                    "Assign to one of: " + names.join(", "),
+                    names[0]
+                );
+
+                if (!names.includes(assignee)) {
+                    alert("Please enter one of the listed child names exactly.");
+                    return;
+                }
+
+                const dueDate = prompt(
+                    "Due date (YYYY-MM-DD), or leave blank:",
+                    ""
+                ) || "";
+
+                if (
+                    dueDate &&
+                    !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)
+                ) {
+                    alert("Please enter the date as YYYY-MM-DD.");
+                    return;
+                }
+
+                const tasks = readLocal("homeBaseTasks");
+
+                tasks.push({
+                    id: Date.now().toString(),
+                    name: name.trim(),
+                    assignee: assignee,
+                    dueDate: dueDate,
+                    rewardMode: "none",
+                    moneyAmount: 0,
+                    pointsAmount: 0,
+                    status: "Assigned",
+                    photo: "",
+                    selectedReward: "",
+                    createdAt: new Date().toISOString()
+                });
+
+                saveTasks(tasks);
+                renderTaskManager();
+                renderFamilyDashboardTasks();
+            }
+        );
+    }
+
+    function addDashboardButton(
+        containerId,
+        buttonId,
+        label,
+        action
+    ) {
+        const container = document.getElementById(containerId);
+
+        if (!container || document.getElementById(buttonId)) return;
+
+        const button = document.createElement("button");
+        button.id = buttonId;
+        button.type = "button";
+        button.textContent = label;
+        button.addEventListener("click", action);
+
+        container.parentElement.insertBefore(button, container);
+    }
+        window.renderDashboardTaskFilter = function () {
+        const filter =
+            document.getElementById("dashboardTaskFilter");
+
+        if (!filter) return;
+
+        const previous = filter.value || "All";
+
+        filter.replaceChildren();
+
+        const all = document.createElement("option");
+        all.value = "All";
+        all.textContent = "All family members";
+        filter.appendChild(all);
+
+        getFamilyMembers()
+            .filter(member => member.role === "Child")
+            .forEach(member => {
+                const option = document.createElement("option");
+                option.value = member.name;
+                option.textContent = member.name;
+                filter.appendChild(option);
+            });
+
+        filter.value = Array.from(filter.options).some(
+            option => option.value === previous
+        ) ? previous : "All";
+    };
+
+    window.renderFamilyDashboardTasks = function () {
+        const container =
+            document.getElementById("familyDashboardTasks");
+
+        if (!container) return;
+
+        const filter =
+            document.getElementById("dashboardTaskFilter");
+
+        const selected = filter ? filter.value : "All";
+
+        const tasks = readLocal("homeBaseTasks").filter(task =>
+            selected === "All" || task.assignee === selected
+        );
+
+        container.replaceChildren();
+
+        const completed = tasks.filter(
+            task => task.status === "Completed"
+        ).length;
+
+        const progress =
+            document.getElementById("familyTaskProgress");
+
+        const message =
+            document.getElementById("familyTaskMessage");
+
+        if (progress) {
+            progress.textContent = completed + "/" + tasks.length;
+        }
+
+        if (message) {
+            message.textContent = selected === "All"
+                ? "Family task progress"
+                : selected + "'s task progress";
+        }
+
+        const statuses = [
+            "Assigned",
+            "Pending Approval",
+            "Needs More Work",
+            "Completed"
+        ];
+
+        statuses.forEach(status => {
+            const group = tasks.filter(
+                task => task.status === status
+            );
+
+            const heading = document.createElement("h3");
+            heading.textContent =
+                status + " (" + group.length + ")";
+
+            container.appendChild(heading);
+
+            if (!group.length) return;
+
+            group.forEach(task => {
+                const item = document.createElement("div");
+                item.className = "task-item";
+
+                const title = document.createElement("strong");
+                title.textContent = task.name;
+
+                const detail = document.createElement("p");
+                detail.className = "muted";
+
+                detail.textContent =
+                    "Assigned to " + task.assignee +
+                    (task.dueDate ? " · Due " + task.dueDate : "");
+
+                item.append(title, detail);
+                container.appendChild(item);
+            });
+        });
+
+        if (!tasks.length) {
+            container.textContent =
+                "No tasks for this selection yet.";
+        }
+    };
+
+    addDashboardControls();
+    renderDashboardTaskFilter();
+
+    window.homeBaseLoadCloudData = loadCloudData;
+})();
+
+// BASE VOICE PROFILE
+// This feature selects a family profile from a spoken name. It does not
+// perform biometric speaker identification and does not save audio.
+let baseVoiceReturnScreen = "settingsPage";
+let baseVoiceRecognition = null;
+let baseVoiceStopRequested = false;
+
+function getBaseVoicePeople() {
+    const members = typeof getFamilyMembers === "function"
+        ? getFamilyMembers().slice()
+        : [];
+
+    const parentName = (localStorage.getItem("homeBaseParentName") || "").trim();
+    if (parentName && !members.some(member =>
+        String(member.name || "").toLowerCase() === parentName.toLowerCase()
+    )) {
+        members.unshift({ name: parentName, role: "Parent" });
+    }
+
+    const childName = typeof getCurrentChildName === "function"
+        ? getCurrentChildName()
+        : "";
+
+    if (childName && childName !== "Child" && !members.some(member =>
+        String(member.name || "").toLowerCase() === childName.toLowerCase()
+    )) {
+        members.push({ name: childName, role: "Child" });
+    }
+
+    return members.filter(member => member && member.name);
+}
+function getBaseVoiceSettingsKey(profileName) {
+    return "homeBaseVoiceProfileSettings:" + encodeURIComponent(profileName);
+}
+
+function getBaseCurrentPersonName() {
+    const role = sessionStorage.getItem("homeBaseCurrentRole") ||
+        localStorage.getItem("homeBaseCurrentRole") || "";
+
+    if (role === "Child") {
+        return sessionStorage.getItem("homeBaseCurrentChild") ||
+            localStorage.getItem("homeBaseCurrentChild") || "";
+    }
+
+    if (role === "Parent") {
+        return localStorage.getItem("homeBaseParentName") || "";
+    }
+
+    return "";
+}
+
+function openVoiceProfile() {
+    const visibleScreen = screenIds.find(id => {
+        const element = document.getElementById(id);
+        return element && element.style.display !== "none";
+    });
+
+    baseVoiceReturnScreen =
+        visibleScreen === "childDashboard" ? "childDashboard" : "settingsPage";
+
+    hideAllScreens();
+    document.getElementById("voiceProfilePage").style.display = "block";
+
+    const select = document.getElementById("baseVoiceProfileSelect");
+    const people = getBaseVoicePeople();
+    select.replaceChildren();
+
+    if (!people.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No family profiles found";
+        select.appendChild(option);
+        select.disabled = true;
+    } else {
+        select.disabled = false;
+        people.forEach(person => {
+            const option = document.createElement("option");
+            option.value = person.name;
+            option.textContent = person.name +
+                (person.role ? " (" + person.role + ")" : "");
+            select.appendChild(option);
+        });
+    }
+
+    const currentName = getBaseCurrentPersonName();
+    const savedName = localStorage.getItem("homeBaseVoiceProfile");
+    const preferredName = people.some(person => person.name === currentName)
+        ? currentName
+        : savedName;
+
+    if (people.some(person => person.name === preferredName)) {
+        select.value = preferredName;
+    }
+
+    updateBaseVoiceControls();
+    document.getElementById("baseVoiceStatus").textContent = "";
+}
+
+function updateBaseVoiceControls() {
+    const select = document.getElementById("baseVoiceProfileSelect");
+    const checkbox = document.getElementById("baseVoiceEnabled");
+    if (!select || !checkbox) return;
+
+    const profileName = select.value;
+    if (!profileName) {
+        checkbox.checked = false;
+        checkbox.disabled = true;
+        return;
+    }
+
+    checkbox.disabled = false;
+    let settings = {};
+    try {
+        settings = JSON.parse(
+            localStorage.getItem(getBaseVoiceSettingsKey(profileName)) || "{}"
+        );
+    } catch (error) {
+        settings = {};
+    }
+
+    checkbox.checked = settings.enabled === true;
+}
+
+function saveBaseVoiceSettings() {
+    const select = document.getElementById("baseVoiceProfileSelect");
+    const checkbox = document.getElementById("baseVoiceEnabled");
+    if (!select || !select.value || !checkbox) return;
+
+    const profileName = select.value;
+    localStorage.setItem("homeBaseVoiceProfile", profileName);
+    localStorage.setItem(
+        getBaseVoiceSettingsKey(profileName),
+        JSON.stringify({ enabled: checkbox.checked })
+    );
+}
+
+function closeVoiceProfile() {
+    hideAllScreens();
+
+    if (baseVoiceReturnScreen === "childDashboard") {
+        document.getElementById("childDashboard").style.display = "block";
+        return;
+    }
+
+    if (baseVoiceReturnScreen === "settingsPage") {
+        document.getElementById("settingsPage").style.display = "block";
+        return;
+    }
+
+    document.getElementById("welcomeScreen").style.display = "block";
+}
+
+function startBaseVoiceSetup() {
+    const select = document.getElementById("baseVoiceProfileSelect");
+    const checkbox = document.getElementById("baseVoiceEnabled");
+    const status = document.getElementById("baseVoiceStatus");
+    const startButton = document.getElementById("baseVoiceStartButton");
+    const stopButton = document.getElementById("baseVoiceStopButton");
+
+    if (!select || !select.value) {
+        status.textContent = "Choose a family profile first.";
+        return;
+    }
+
+    if (!checkbox.checked) {
+        status.textContent = "Turn on spoken profile selection first.";
+        return;
+    }
+
+    if (baseVoiceRecognition) {
+        return;
+    }
+
+    const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        status.textContent =
+            "Voice input is not supported in this browser. Please choose your profile manually.";
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    baseVoiceRecognition = recognition;
+    baseVoiceStopRequested = false;
+
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    startButton.style.display = "none";
+    stopButton.style.display = "inline-block";
+
+    status.textContent = 'Listening. Say "My name is [your name]."';
+
+    recognition.onresult = function(event) {
+        const spoken = String(event.results[0][0].transcript || "")
+            .toLowerCase()
+            .replace(/[.!?,]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        const people = getBaseVoicePeople();
+
+        const matches = people.filter(person => {
+            const name = String(person.name || "").toLowerCase().trim();
+
+            return name && (
+                spoken === name ||
+                spoken.includes("my name is " + name) ||
+                spoken.includes("i am " + name) ||
+                spoken.includes("i'm " + name)
+            );
+        });
+
+        if (matches.length !== 1) {
+            status.textContent =
+                "I couldn't confidently match that name. Try again or choose your profile from the list.";
+            return;
+        }
+
+        const matchedName = matches[0].name;
+
+        select.value = matchedName;
+        localStorage.setItem("homeBaseVoiceProfile", matchedName);
+        updateBaseVoiceControls();
+
+        status.textContent =
+            "Selected " + matchedName + "'s profile.";
+    };
+
+    recognition.onerror = function(event) {
+        if (baseVoiceStopRequested || event.error === "aborted") {
+            return;
+        }
+
+        status.textContent =
+            "Microphone issue: " + event.error +
+            ". You can still select your profile manually.";
+    };
+
+    recognition.onend = function() {
+        if (baseVoiceRecognition === recognition) {
+            baseVoiceRecognition = null;
+        }
+
+        startButton.style.display = "inline-block";
+        stopButton.style.display = "none";
+
+        if (baseVoiceStopRequested) {
+            status.textContent = "Listening stopped.";
+            baseVoiceStopRequested = false;
+        } else if (status.textContent.startsWith("Listening.")) {
+            status.textContent =
+                "No name was heard. Try again or choose your profile manually.";
+        }
+    };
+
+    try {
+        recognition.start();
+    } catch (error) {
+        baseVoiceRecognition = null;
+        startButton.style.display = "inline-block";
+        stopButton.style.display = "none";
+
+        status.textContent =
+            "Couldn't start voice input. Please choose your profile manually.";
+    }
+}function stopBaseVoiceSetup() {
+    if (!baseVoiceRecognition) return;
+
+    baseVoiceStopRequested = true;
+
+    try {
+        baseVoiceRecognition.abort();
+    } catch (error) {
+        baseVoiceRecognition = null;
+
+        function stopBaseVoiceSetup() {
+    if (!baseVoiceRecognition) return;
+
+    baseVoiceStopRequested = true;
+
+    try {
+        baseVoiceRecognition.abort();
+    } catch (error) {
+        baseVoiceRecognition = null;
+        baseVoiceStopRequested = false;
+
+        const startButton = document.getElementById("baseVoiceStartButton");
+        const stopButton = document.getElementById("baseVoiceStopButton");
+        const status = document.getElementById("baseVoiceStatus");
+
+        if (startButton) startButton.style.display = "inline-block";
+        if (stopButton) stopButton.style.display = "none";
+        if (status) status.textContent = "Listening stopped.";
+    }
+}
+    };
+
+    recognition.onend = function() {
+        if (status.textContent.startsWith("Listening.")) {
+            status.textContent =
+                "No name was heard. Try again or choose your profile manually.";
+        }
+    };
+
+    try {
+        recognition.start();
+    } catch (error) {
+        status.textContent =
+            "Couldn't start voice input. Please choose your profile manually.";
+    }
+}
+
+document.addEventListener("change", function(event) {
+    if (event.target.id === "baseVoiceProfileSelect") {
+        if (event.target.value) {
+            localStorage.setItem("homeBaseVoiceProfile", event.target.value);
+        }
+        updateBaseVoiceControls();
+    }
+
+    if (event.target.id === "baseVoiceEnabled") {
+        saveBaseVoiceSettings();
+    }
+});
+
+</script>
+
+<script>
+/* HOMEBASE CHILD ACCOUNTS + FAMILY INVITATION LOGIN */
+(function () {
+    // Add the child password field to Family Login
+    const familyLogin = document.getElementById("familyLogin");
+
+    if (!document.getElementById("loginChildPassword")) {
+        const passwordLabel = document.createElement("label");
+        passwordLabel.htmlFor = "loginChildPassword";
+        passwordLabel.textContent = "Child Password";
+
+        const passwordInput = document.createElement("input");
+        passwordInput.id = "loginChildPassword";
+        passwordInput.type = "password";
+        passwordInput.placeholder = "Enter your password";
+        passwordInput.autocomplete = "current-password";
+
+        document.getElementById("loginFamilyCode")
+            .insertAdjacentElement("afterend", passwordLabel);
+
+        passwordLabel.insertAdjacentElement("afterend", passwordInput);
+
+        const loginButton = familyLogin.querySelector("button");
+        loginButton.textContent = "Sign In";
+        loginButton.onclick = () => window.attemptChildSignIn();
+
+        const message = document.createElement("p");
+        message.id = "childLoginMessage";
+        message.className = "status-message";
+        familyLogin.appendChild(message);
+    }
+
+    // Child account creation now starts from Family Management
+    window.selectRole = function (role) {
+        if (role === "Child") {
+            showFamilyLogin();
+            return;
+        }
+
+        hideAllScreens();
+        document.getElementById("parentSignup").style.display = "block";
+    };
+
+    // Add the parent controls for creating child accounts
+    if (!document.getElementById("managementChildName")) {
+        const membersCard = document
+            .getElementById("managementMemberList")
+            .closest(".card");
+
+        membersCard.insertAdjacentHTML("beforebegin", `
+            <div class="card">
+                <h3>➕ Add a Child Account</h3>
+                <p>Create a profile and password for each child. They will use your family invitation code to sign in.</p>
+
+                <label for="managementChildName">Child's Name</label><br>
+                <input id="managementChildName"
+                    placeholder="Enter child's name"
+                    autocomplete="off">
+
+                <br><br>
+
+                <label for="managementChildPassword">Child's Password</label><br>
+                <input id="managementChildPassword"
+                    type="password"
+                    placeholder="At least 8 characters"
+                    autocomplete="new-password">
+
+                <br>
+
+                <button type="button" onclick="createChildAccount()">
+                    Create Child Account
+                </button>
+
+                <p id="managementChildMessage"
+                    class="status-message"
+                    role="status"></p>
+            </div>
+        `);
+    }
+
+    function makeFamilyCode() {
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const values = new Uint8Array(10);
+        crypto.getRandomValues(values);
+
+        return Array.from(
+            values,
+            value => alphabet[value % alphabet.length]
+        ).join("");
+    }
+
+    // Create families with a permanent invitation code
+    window.createFamily = async function () {
+        const familyName =
+            document.getElementById("familyName").value.trim();
+
+        if (!familyName) {
+            alert("Please enter your family name.");
+            return;
+        }
+
+        const { data: authData, error: authError } =
+            await homeBaseSupabase.auth.getUser();
+
+        if (authError || !authData.user) {
+            alert("Please sign in before creating a family.");
+            return;
+        }
+
+        const user = authData.user;
+        const parentName =
+            localStorage.getItem("homeBaseParentName") || "Parent";
+
+        let family = null;
+        let familyError = null;
+
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const result = await homeBaseSupabase
+                .from("families")
+                .insert({
+                    name: familyName,
+                    created_by: user.id,
+                    family_code: makeFamilyCode()
+                })
+                .select()
+                .single();
+
+            family = result.data;
+            familyError = result.error;
+
+            if (!familyError) break;
+
+            if (!String(familyError.message || "")
+                .toLowerCase().includes("unique")) {
+                break;
+            }
+        }
+
+        if (familyError || !family) {
+            console.error(familyError);
+            alert("Couldn't create your family: " +
+                (familyError?.message || "Please try again."));
+            return;
+        }
+
+        const { error: memberError } = await homeBaseSupabase
+            .from("family_members")
+            .insert({
+                family_id: family.id,
+                user_id: user.id,
+                display_name: parentName,
+                role: "parent"
+            });
+
+        if (memberError) {
+            console.error(memberError);
+            alert("Family created, but parent membership failed: " +
+                memberError.message);
+            return;
+        }
+
+        localStorage.setItem("homeBaseFamilyId", family.id);
+        localStorage.setItem("homeBaseFamilyName", family.name);
+        localStorage.setItem("homeBaseFamilyCode", family.family_code);
+        localStorage.setItem("homeBaseCurrentRole", "Parent");
+        sessionStorage.setItem("homeBaseCurrentRole", "Parent");
+
+        saveFamilyMembers([
+            { name: parentName, role: "Parent" }
+        ]);
+
+        saveTasks([]);
+        saveEvents([]);
+        saveReminders([]);
+
+        renderFamilyMembers();
+        renderTaskManager();
+        renderCalendarViews();
+        renderReminderViews();
+        renderNewFeatureViews();
+
+        hideAllScreens();
+        document.getElementById("parentDashboard").style.display = "block";
+
+        document.getElementById("parentDashboardGreeting").textContent =
+            "Welcome to " + family.name + "!";
+
+        alert("Your family was created! Your invitation code is: " +
+            family.family_code);
+    };
+
+    // Load the invitation code after parent sign-in
+    const previousAttemptSignIn = window.attemptSignIn;
+
+    window.attemptSignIn = async function () {
+        await previousAttemptSignIn();
+
+        if (document.getElementById("parentDashboard").style.display === "none") {
+            return;
+        }
+
+        const familyId = localStorage.getItem("homeBaseFamilyId");
+        if (!familyId) return;
+
+        const { data: family, error } = await homeBaseSupabase
+            .from("families")
+            .select("name, family_code")
+            .eq("id", familyId)
+            .single();
+
+        if (error || !family) {
+            console.error("Could not load family code:", error);
+            return;
+        }
+
+        localStorage.setItem("homeBaseFamilyCode", family.family_code);
+        localStorage.setItem("homeBaseFamilyName", family.name);
+    };
+
+    // Show the current invitation code in Family Management
+    const previousOpenFamilyManagement = window.openFamilyManagement;
+
+    window.openFamilyManagement = async function () {
+        if (previousOpenFamilyManagement) {
+            previousOpenFamilyManagement();
+        }
+
+        const familyId = localStorage.getItem("homeBaseFamilyId");
+        if (!familyId) return;
+
+        const { data: family, error } = await homeBaseSupabase
+            .from("families")
+            .select("name, family_code")
+            .eq("id", familyId)
+            .single();
+
+        if (error || !family) {
+            console.error(error);
+            return;
+        }
+
+        localStorage.setItem("homeBaseFamilyCode", family.family_code);
+        document.getElementById("displayFamilyName").textContent = family.name;
+        document.getElementById("displayInvitationCode").textContent =
+            family.family_code;
+    };
+
+    // Create a child account through the Edge Function
+    window.createChildAccount = async function () {
+        const nameInput =
+            document.getElementById("managementChildName");
+
+        const passwordInput =
+            document.getElementById("managementChildPassword");
+
+        const message =
+            document.getElementById("managementChildMessage");
+
+        const childName = nameInput.value.trim();
+        const password = passwordInput.value;
+        const familyId = localStorage.getItem("homeBaseFamilyId");
+
+        if (!childName || !password) {
+            message.textContent = "Enter the child's name and password.";
+            return;
+        }
+
+        if (password.length < 8) {
+            message.textContent =
+                "The password must be at least 8 characters.";
+            return;
+        }
+
+        if (!familyId) {
+            message.textContent =
+                "Your family could not be found. Please sign in again.";
+            return;
+        }
+
+        message.textContent = "Creating child account...";
+
+        const { data, error } =
+            await homeBaseSupabase.functions.invoke("child-auth", {
+                body: {
+                    action: "create",
+                    family_id: familyId,
+                    display_name: childName,
+                    password: password
+                }
+            });
+
+        if (error) {
+            console.error(error);
+            message.textContent =
+                "Couldn't create the account. Check the function deployment and try again.";
+            return;
+        }
+
+        if (data?.error) {
+            message.textContent = data.error;
+            return;
+        }
+
+        const members = getFamilyMembers();
+        members.push({ name: childName, role: "Child" });
+        saveFamilyMembers(members);
+
+        nameInput.value = "";
+        passwordInput.value = "";
+
+        message.textContent = "Child account created successfully!";
+
+        renderFamilyMembers();
+        renderTaskManager();
+    };
+
+    // Child signs in with family code + their own password
+    window.attemptChildSignIn = async function () {
+    const code = document
+        .getElementById("loginFamilyCode")
+        .value.trim().toUpperCase();
+
+    const password =
+        document.getElementById("loginChildPassword").value;
+
+    const message =
+        document.getElementById("childLoginMessage");
+
+    if (!code || !password) {
+        message.textContent = "Enter your family code and password.";
+        return;
+    }
+
+    message.textContent = "Signing in...";
+
+    try {
+        const { data, error } =
+            await homeBaseSupabase.functions.invoke("child-auth", {
+                body: {
+                    action: "login",
+                    family_code: code,
+                    password: password
+                }
+            });
+
+        if (error || data?.error || !data?.token_hash) {
+            console.error("Child login error:", error || data?.error);
+            message.textContent =
+                data?.error || "Couldn't sign in. Please try again.";
+            return;
+        }
+
+        const { data: authData, error: authError } =
+            await homeBaseSupabase.auth.verifyOtp({
+                token_hash: data.token_hash,
+                type: "magiclink"
+            });
+
+        if (authError || !authData?.session) {
+            console.error("Session error:", authError);
+            message.textContent =
+                "Couldn't create your login session.";
+            return;
+        }
+
+        const { data: member, error: memberError } =
+            await homeBaseSupabase
+                .from("family_members")
+                .select("id, family_id, display_name, role")
+                .eq("user_id", authData.user.id)
+                .single();
+
+        if (memberError || !member) {
+            console.error("Member lookup error:", memberError);
+            message.textContent = "Couldn't load your family account.";
+            return;
+        }
+
+        const { data: family, error: familyError } =
+            await homeBaseSupabase
+                .from("families")
+                .select("*")
+                .eq("id", member.family_id)
+                .single();
+
+        if (familyError || !family) {
+            console.error("Family lookup error:", familyError);
+            message.textContent = "Couldn't load your family.";
+            return;
+        }
+
+        localStorage.setItem("homeBaseFamilyId", member.family_id);
+        localStorage.setItem("homeBaseMemberId", member.id);
+        localStorage.setItem("homeBaseUserRole", "child");
+        localStorage.setItem("homeBaseChildName", member.display_name);
+        localStorage.setItem("homeBaseFamilyName", family.name);
+
+        document.getElementById("familyLogin").style.display = "none";
+
+       document.getElementById("childDashboard").style.display = "block";
+
+renderChildTasks();
+renderCalendarViews();
+renderReminderViews();
+renderNewFeatureViews();
+
+    } catch (err) {
+        console.error("Unexpected child login error:", err);
+        message.textContent = "Something went wrong. Check the console.";
+    }
+};
+
+})();
+
+</script>
+
 </body>
 </html>

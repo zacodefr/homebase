@@ -899,16 +899,23 @@ async function loadFamilyMembers() {
         id: member.id,
         name: member.display_name,
         displayName: member.display_name,
-        role: member.role
+        role: member.role.toLowerCase() === "parent"
+            ? "Parent"
+            : "Child"
     }));
+
+
+    renderFamilyMembers();
+    renderTaskManager();
+    renderCalendarViews();
+    renderReminderViews();
+}
 
     localStorage.setItem(
         "homeBaseMembers",
         JSON.stringify(members)
     );
 
-    console.log("HomeBase family members loaded:", members);
-}
 function saveFamilyMembers(members) { localStorage.setItem("homeBaseMembers", JSON.stringify(members)); }
 function getTasks() {
     try { return JSON.parse(localStorage.getItem("homeBaseTasks")) || []; } catch { return []; }

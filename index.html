@@ -871,7 +871,43 @@ async function showFamilySetup() {
     document.getElementById("familySetup").style.display = "block";
 }
 function getFamilyMembers() {
-    try { return JSON.parse(localStorage.getItem("homeBaseMembers")) || []; } catch { return []; }
+    try {
+        return JSON.parse(
+            localStorage.getItem("homeBaseMembers")
+        ) || [];
+    } catch {
+        return [];
+    }
+}
+
+async function loadFamilyMembers() {
+    const familyId = localStorage.getItem("homeBaseFamilyId");
+
+    if (!familyId || !homeBaseSupabase) return;
+
+    const { data, error } = await homeBaseSupabase
+        .from("family_members")
+        .select("id, display_name, role, family_id")
+        .eq("family_id", familyId);
+
+    if (error) {
+        console.error("Could not load family members:", error);
+        return;
+    }
+
+    const members = (data || []).map(member => ({
+        id: member.id,
+        name: member.display_name,
+        displayName: member.display_name,
+        role: member.role
+    }));
+
+    localStorage.setItem(
+        "homeBaseMembers",
+        JSON.stringify(members)
+    );
+
+    console.log("HomeBase family members loaded:", members);
 }
 function saveFamilyMembers(members) { localStorage.setItem("homeBaseMembers", JSON.stringify(members)); }
 function getTasks() {
@@ -2177,14 +2213,15 @@ async function startHomeBaseRealtime() {
     };
 
     window.attemptSignIn = async function () {
-        await original.attemptSignIn();
+    await original.attemptSignIn();
 
-        if (
-            document.getElementById("parentDashboard").style.display !== "none"
-        ) {
-            await loadCloudData();
-        }
-    };
+    if (
+        document.getElementById("parentDashboard").style.display !== "none"
+    ) {
+        await loadFamilyMembers();
+        await loadCloudData();
+    }
+};
 
     window.createFamily = async function () {
         await original.createFamily();

@@ -904,12 +904,26 @@ async function loadFamilyMembers() {
             : "Child"
     }));
 
+    localStorage.setItem(
+        "homeBaseMembers",
+        JSON.stringify(members)
+    );
 
     renderFamilyMembers();
     renderTaskManager();
+}
+function saveFamilyMembers(members) {
+    localStorage.setItem(
+        "homeBaseMembers",
+        JSON.stringify(members)
+    );
+
+    renderFamilyMembers();
+    renderTaskManager();
+}
     renderCalendarViews();
     renderReminderViews();
-}
+
 
     localStorage.setItem(
         "homeBaseMembers",

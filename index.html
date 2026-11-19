@@ -1856,8 +1856,25 @@ function readStore(key, fallback) { try { const value = JSON.parse(localStorage.
 function writeStore(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 function getBalances() { return readStore("homeBaseBalances", {}); }
 function saveBalances(value) { writeStore("homeBaseBalances", value); }
-function getRewardHistory() { return readStore("homeBaseRewardHistory", []); }
-function addRewardHistory(item) { const history = getRewardHistory(); history.unshift(item); writeStore("homeBaseRewardHistory", history); }
+// Keep allowance history isolated to the currently selected family.
+function getRewardHistory() {
+    const familyId = localStorage.getItem("homeBaseFamilyId");
+    if (!familyId) return [];
+
+    const allHistory = readStore("homeBaseRewardHistory", []);
+    return allHistory.filter(entry => entry && entry.familyId === familyId);
+}
+function addRewardHistory(item) {
+    const familyId = localStorage.getItem("homeBaseFamilyId");
+    if (!familyId) {
+        console.error("Allowance history was not saved because no family is selected.");
+        return;
+    }
+
+    const allHistory = readStore("homeBaseRewardHistory", []);
+    allHistory.unshift({ ...item, familyId });
+    writeStore("homeBaseRewardHistory", allHistory);
+}
 function getCurrentChildName() {
     return sessionStorage.getItem("homeBaseCurrentChild") || localStorage.getItem("homeBaseCurrentChild") || "Child";
 }

@@ -809,6 +809,9 @@ async function attemptSignIn() {
         localStorage.setItem("homeBaseCurrentRole", "Parent");
         sessionStorage.setItem("homeBaseCurrentRole", "Parent");
 
+        // Refresh the family member list from the cloud for this device.
+        await loadFamilyMembersFromCloud(familyId);
+
 // Load the family dashboard
 hideAllScreens();
 
@@ -892,6 +895,35 @@ function saveFamilyMembers(members) {
     renderCalendarViews();
     renderReminderViews();
     renderNewFeatureViews();
+}
+
+// Load the current family's members from Supabase on every device.
+async function loadFamilyMembersFromCloud(familyId) {
+    if (!familyId) {
+        throw new Error("The family ID is missing.");
+    }
+
+    const { data, error } = await homeBaseSupabase
+        .from("family_members")
+        .select("id, display_name, role")
+        .eq("family_id", familyId);
+
+    if (error) {
+        throw error;
+    }
+
+    const members = (data || []).map(member => ({
+        memberId: member.id,
+        name: member.display_name || "Family Member",
+        role: member.role === "parent"
+            ? "Parent"
+            : member.role === "child"
+                ? "Child"
+                : member.role
+    }));
+
+    saveFamilyMembers(members);
+    return members;
 }
 function getTasks() {
     try { return JSON.parse(localStorage.getItem("homeBaseTasks")) || []; } catch { return []; }
@@ -1067,6 +1099,15 @@ async function createChildAccount() {
 
         if (!data || data.success !== true) {
             message.textContent = (data && (data.error || data.message)) || "The child account could not be created.";
+            return;
+        }
+
+        // Refresh the parent's family list so the new child appears immediately.
+        try {
+            await loadFamilyMembersFromCloud(memberships[0].family_id);
+        } catch (membersError) {
+            console.error("Child was created, but the family list could not refresh:", membersError);
+            message.textContent = "Child account created, but the family list couldn't refresh. Please sign in again to reload it.";
             return;
         }
 
